@@ -2,10 +2,10 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/signup": "pages/signup.js",
-  "/confirm-loan": "pages/confirm-loan.js",
-  "/api/loans": "pages/api/loans.js",
-  "/bank-info": "pages/bank-info.js",
+  "/dashboard": "pages/dashboard.js",
+  "/choose-loan": "pages/choose-loan.js",
+  "/verify": "pages/verify.js",
   "/kyc": "pages/kyc.js",
-  "/dashboard": "pages/dashboard.js"
+  "/api/loans": "pages/api/loans.js",
+  "/api/auth/me": "pages/api/auth/me.js"
 }

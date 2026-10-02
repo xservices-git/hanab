@@ -30,7 +30,7 @@ export default function VerifyPage() {
 
   return (
     <main className="min-h-screen bg-[#142014] text-[#333]">
-      <div className="mx-auto min-h-screen w-full max-w-[390px] bg-white">
+      <div className="mx-auto min-h-screen w-full max-w-[390px] bg-white pb-[120px]">
         <Header title="Xác minh" />
         <h1 className="mt-[19px] text-center text-[18px] font-bold">Thông tin cá nhân</h1>
         <form className="mx-[17px] mt-[12px] space-y-[18px]" onSubmit={goNext}>

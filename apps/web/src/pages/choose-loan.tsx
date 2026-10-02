@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ChevronDown } from 'lucide-react';
 import MobileBottomNav from '../components/MobileBottomNav';
 
-const terms = [12, 24, 36, 60];
+const terms = [6, 12, 24, 36, 60];
 
 export default function ChooseLoanPage() {
   const router = useRouter();

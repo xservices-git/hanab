@@ -22,15 +22,10 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/bank-info": [
+    "/choose-loan": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/bank-info.js"
-    ],
-    "/confirm-loan": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/confirm-loan.js"
+      "static/chunks/pages/choose-loan.js"
     ],
     "/dashboard": [
       "static/chunks/webpack.js",
@@ -42,10 +37,10 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/main.js",
       "static/chunks/pages/kyc.js"
     ],
-    "/signup": [
+    "/verify": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/signup.js"
+      "static/chunks/pages/verify.js"
     ]
   }
 };
