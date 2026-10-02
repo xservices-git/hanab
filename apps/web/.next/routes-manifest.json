@@ -243,23 +243,23 @@
   "dataRoutes": [
     {
       "page": "/",
-      "dataRouteRegex": "^/_next/data/MVcx6phQ1c4tiYb1EIGul/index\\.json$"
+      "dataRouteRegex": "^/_next/data/QBcJnfqeZOvQFF6PleSTM/index\\.json$"
     },
     {
       "page": "/admin",
-      "dataRouteRegex": "^/_next/data/MVcx6phQ1c4tiYb1EIGul/admin\\.json$"
+      "dataRouteRegex": "^/_next/data/QBcJnfqeZOvQFF6PleSTM/admin\\.json$"
     },
     {
       "page": "/agent",
-      "dataRouteRegex": "^/_next/data/MVcx6phQ1c4tiYb1EIGul/agent\\.json$"
+      "dataRouteRegex": "^/_next/data/QBcJnfqeZOvQFF6PleSTM/agent\\.json$"
     },
     {
       "page": "/contract/[id]",
       "routeKeys": {
         "nxtPid": "nxtPid"
       },
-      "dataRouteRegex": "^/_next/data/MVcx6phQ1c4tiYb1EIGul/contract/([^/]+?)\\.json$",
-      "namedDataRouteRegex": "^/_next/data/MVcx6phQ1c4tiYb1EIGul/contract/(?<nxtPid>[^/]+?)\\.json$"
+      "dataRouteRegex": "^/_next/data/QBcJnfqeZOvQFF6PleSTM/contract/([^/]+?)\\.json$",
+      "namedDataRouteRegex": "^/_next/data/QBcJnfqeZOvQFF6PleSTM/contract/(?<nxtPid>[^/]+?)\\.json$"
     }
   ],
   "rsc": {
