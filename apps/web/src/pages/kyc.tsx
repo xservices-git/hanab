@@ -19,7 +19,7 @@ export default function KycPage() {
 
   return (
     <main className="min-h-screen bg-[#142014] text-[#333]">
-      <div className="mx-auto min-h-screen w-full max-w-[390px] bg-white">
+      <div className="mx-auto min-h-screen w-full max-w-[390px] bg-white pb-[120px]">
         <Header title="Xác minh" />
         <h1 className="mt-[13px] text-center text-[18px] font-bold">Chụp ảnh định danh KYC</h1>
         <div className="mx-[25px] mt-[13px] space-y-[20px]">
