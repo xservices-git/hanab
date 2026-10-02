@@ -18,13 +18,13 @@ export default function ContractPdfPage({ loan }: Props) {
     </div>
 
     <article className="relative mx-auto max-w-[820px] overflow-hidden bg-white p-10 text-[14.5px] leading-7 text-slate-950 shadow-xl print:shadow-none">
-      <img src="/mb-bank-logo.jpg" alt="" aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 w-[430px] -translate-x-1/2 -translate-y-1/2 rotate-[-28deg] opacity-[0.055]" />
+      <img src="/logo.png" alt="" aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 w-[430px] -translate-x-1/2 -translate-y-1/2 rotate-[-28deg] opacity-[0.055]" />
 
       <header className="relative border-b-4 border-blue-700 pb-5">
         <div className="flex items-start justify-between gap-6">
           <div>
             <div className="flex items-center gap-3">
-              <img src="/mb-bank-logo.jpg" alt="KEB Hana Bank" className="h-12 w-auto object-contain" />
+              <img src="/logo.png" alt="KEB Hana Bank" className="h-12 w-auto object-contain" />
               <div>
                 <div className="text-3xl font-black tracking-tight text-blue-700">KEB Hana Bank</div>
                 <div className="mt-1 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500">Hợp đồng tín dụng điện tử</div>
@@ -62,7 +62,7 @@ export default function ContractPdfPage({ loan }: Props) {
       <section className="relative mt-7">
         <Title>II. Thông tin khoản vay</Title>
         <div className="rounded-2xl border border-slate-200 p-4">
-          <Row label="Số tiền vay" value={`${money(loan.amount)} VND`} strong />
+          <Row label="Số tiền vay" value={`${money(loan.amount)} KRW`} strong />
           <Row label="Thời hạn vay" value={`${loan.termMonths || 0} tháng`} />
           <Row label="Lãi suất" value={`${loan.interestRate || 0}%/tháng`} />
           <Row label="Ngày tạo hồ sơ" value={date(loan.createdAt)} />
@@ -101,7 +101,7 @@ export default function ContractPdfPage({ loan }: Props) {
           <div className="font-black uppercase">Đại diện KEB Hana Bank</div>
           <div className="text-xs text-slate-500">Xác nhận hệ thống</div>
           <div className="relative mx-auto mt-5 h-32 w-44">
-            <img src="/mb-bank-logo.jpg" alt="KEB Hana Bank" className="mx-auto h-14 w-auto object-contain" />
+            <img src="/logo.png" alt="KEB Hana Bank" className="mx-auto h-14 w-auto object-contain" />
             <svg viewBox="0 0 160 160" className="absolute left-1/2 top-7 h-24 w-24 -translate-x-1/2 rotate-[-9deg] opacity-90">
               <circle cx="80" cy="80" r="66" fill="none" stroke="#dc2626" strokeWidth="5" strokeDasharray="3 2" />
               <circle cx="80" cy="80" r="51" fill="none" stroke="#dc2626" strokeWidth="2" opacity="0.75" />
@@ -123,13 +123,13 @@ function Title({ children }: any) { return <h3 className="mb-3 text-[15px] font-
 function Row({ label, value, strong }: any) {
   return <div className="grid grid-cols-[170px_1fr] border-b border-slate-100 py-2 last:border-b-0"><b>{label}</b><span className={strong ? 'font-black text-blue-700' : ''}>{value}</span></div>;
 }
-function money(v: number) { return new Intl.NumberFormat('vi-VN').format(Number(v || 0)); }
+function money(v: number) { return new Intl.NumberFormat('ko-KR').format(Number(v || 0)); }
 function statusLabel(v: string) {
   const labels: Record<string, string> = { submitted: 'Đã gửi', draft: 'Nháp', reviewing: 'Đang duyệt', approved: 'Đã duyệt', disbursed: 'Đã giải ngân', closed: 'Đã tất toán', rejected: 'Từ chối' };
   return labels[v] || v || '-';
 }
-function date(v: any) { return v ? new Date(v).toLocaleDateString('vi-VN') : '-'; }
-function dateTime(v: any) { return v ? new Date(v).toLocaleString('vi-VN') : '-'; }
+function date(v: any) { return v ? new Date(v).toLocaleDateString('ko-KR') : '-'; }
+function dateTime(v: any) { return v ? new Date(v).toLocaleString('ko-KR') : '-'; }
 
 export const getServerSideProps: GetServerSideProps = async ({ req, params }) => {
   const token = req.cookies?.token;

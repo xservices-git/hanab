@@ -361,9 +361,9 @@ function accountLabel(account: any) { return isLocked(account) ? 'đã khóa loc
 function Status({ status }: any) { const ok = ['approved', 'disbursed', 'closed'].includes(status); const bad = status === 'rejected'; return <Badge variant={ok ? 'success' : bad ? 'destructive' : 'warning'}>{({ draft: 'Nháp', submitted: 'Chờ duyệt', reviewing: 'Đang duyệt', approved: 'Đã duyệt', rejected: 'Từ chối', disbursed: 'Giải ngân', closed: 'Đóng', defaulted: 'Quá hạn' } as any)[status] || status}</Badge>; }
 function has(q: string, values: any[]) { if (!q) return true; return values.some((v) => String(v || '').toLowerCase().includes(q)); }
 function inDateRange(value: any, from: string, to: string) { if (!from && !to) return true; const time = value ? new Date(value).getTime() : 0; if (!time) return false; if (from && time < new Date(from + 'T00:00:00').getTime()) return false; if (to && time > new Date(to + 'T23:59:59').getTime()) return false; return true; }
-function money(v: number) { return new Intl.NumberFormat('vi-VN').format(Number(v || 0)) + 'đ'; }
-function date(v: any) { return v ? new Date(v).toLocaleDateString('vi-VN') : '-'; }
-function dateTime(v: any) { return v ? new Date(v).toLocaleString('vi-VN') : '-'; }
+function money(v: number) { return new Intl.NumberFormat('ko-KR').format(Number(v || 0)) + ' KRW'; }
+function date(v: any) { return v ? new Date(v).toLocaleDateString('ko-KR') : '-'; }
+function dateTime(v: any) { return v ? new Date(v).toLocaleString('ko-KR') : '-'; }
 function actionLabel(action: any) { return ({ 'loan.update': 'Cập nhật hồ sơ vay', 'auth.login': 'Đăng nhập', 'auth.logout': 'Đăng xuất' } as any)[action] || action || 'Hoạt động'; }
 function formatMeta(meta: any) { if (!meta) return ''; try { return typeof meta === 'string' ? meta : JSON.stringify(meta, null, 2); } catch { return String(meta); } }
 function loanLabel(status: any) { return ({ draft: 'Nháp', submitted: 'Chờ duyệt', reviewing: 'Đang duyệt', approved: 'Đã duyệt', rejected: 'Từ chối', disbursed: 'Giải ngân', closed: 'Đóng', defaulted: 'Quá hạn' } as any)[status] || status || '-'; }

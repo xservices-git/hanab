@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const { amount, termMonths, interestRate, notes, profile, bank, kyc, signatureImage } = req.body;
     const existingLoan = await prisma.loan.findFirst({ where: { userId: payload.id as string }, select: { id: true } });
     if (existingLoan) return res.status(409).json({ ok: false, error: 'Bạn đã có hồ sơ vay' });
-    if (!amount || amount < 1000000) return res.status(400).json({ ok: false, error: 'Số tiền tối thiểu 1,000,000đ' });
+    if (!amount || amount < 1000000) return res.status(400).json({ ok: false, error: 'Số tiền tối thiểu 1,000,000 KRW' });
     if (!termMonths || termMonths < 1 || termMonths > 60) return res.status(400).json({ ok: false, error: 'Kỳ hạn 1-60 tháng' });
     const agent = await prisma.user.findFirst({
       where: { role: 'agent' },

@@ -55,8 +55,8 @@ export default function ChooseLoanPage() {
           </header>
           <section className="px-5 pt-8 text-white">
             <div className="flex items-center justify-between">
-              <label className="text-[17px] font-bold">Số tiền vay</label>
-              <div className="rounded-[6px] bg-white px-3 py-1 text-[17px] font-bold text-[#2AAD69]">{amount.toLocaleString('en-US')} đ</div>
+              <label className="text-[17px] font-bold">Số tiền vay (KRW)</label>
+              <div className="rounded-[6px] bg-white px-3 py-1 text-[17px] font-bold text-[#2AAD69]">{amount.toLocaleString('ko-KR')} KRW</div>
             </div>
             <input
               type="range"
@@ -67,7 +67,7 @@ export default function ChooseLoanPage() {
               onChange={(e) => setAmount(Number(e.target.value))}
               className="mt-5 w-full accent-[#e11d48]"
             />
-            <div className="mt-3 flex justify-between px-2 text-[14px] font-bold text-[#222]"><span>Từ 2.000.000đ</span><span>Đến 500.000.000đ</span></div>
+            <div className="mt-3 flex justify-between px-2 text-[14px] font-bold text-[#222]"><span>Từ 2,000,000 KRW</span><span>Đến 500,000,000 KRW</span></div>
             <div className="mt-5 flex items-center justify-between text-[#222]">
               <span className="text-[16px] font-medium">Chọn thời hạn vay</span>
               <div className="relative">
@@ -104,14 +104,14 @@ export default function ChooseLoanPage() {
         <section className="mx-7 -mt-[2px] rounded-[7px] bg-white shadow-[0_5px_11px_rgba(0,0,0,0.25)]">
           <h2 className="rounded-t-[7px] bg-gradient-to-b from-[#2AAD69] to-[#777bf2] py-3 text-center text-[22px] font-bold text-white">Thông tin khoản vay</h2>
           <div className="space-y-[10px] px-7 py-4 text-[14px]">
-            <Row l="Số tiền" r={`${amount.toLocaleString('en-US')} đ`} />
+            <Row l="Số tiền" r={`${amount.toLocaleString('ko-KR')} KRW`} />
             <Row l="Thời hạn vay" r={`${term} tháng`} />
             <Row l="Ngày vay" r="2/6/2026" />
             <Row l="Hình thức thanh toán" r="Trả góp mỗi tháng" />
           </div>
         </section>
 
-        <section className="mx-8 mt-7 space-y-6 text-[16px]"><Row l="Trả nợ kì đầu" r={`${firstPay.toLocaleString('en-US')} VND`} /><Row l="Lãi suất hàng tháng" r="1%" /><button onClick={() => setOpen(true)} className="text-[#0b7f9f]">Chi tiết trả nợ</button></section>
+        <section className="mx-8 mt-7 space-y-6 text-[16px]"><Row l="Trả nợ kì đầu" r={`${firstPay.toLocaleString('ko-KR')} KRW`} /><Row l="Lãi suất hàng tháng" r="1%" /><button onClick={() => setOpen(true)} className="text-[#0b7f9f]">Chi tiết trả nợ</button></section>
         <div className="mt-8 flex justify-center"><Link href={`/verify?amount=${amount}&term=${term}`} onClick={() => { window.localStorage.setItem('loanAmount', String(amount)); window.localStorage.setItem('loanTerm', String(term)); }} className="flex h-[58px] w-[215px] items-center justify-center rounded-full bg-[#2AAD69] text-[20px] font-bold text-white">Xác nhận khoản vay</Link></div>
 
         {toast && <div className="fixed left-1/2 top-4 z-50 w-[340px] -translate-x-1/2 rounded-[10px] bg-[#202124] px-4 py-3 text-center text-[14px] font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.28)]">{toast}</div>}
@@ -138,7 +138,7 @@ export default function ChooseLoanPage() {
                     {schedule.map((row) => (
                       <tr key={row.index} className="h-[54px] border-b border-[#f0f2f8] last:border-b-0">
                         <td className="text-[#4a4f5f]">Kì thứ {row.index}</td>
-                        <td className="text-right font-bold text-[#2AAD69]">{row.amount.toLocaleString('en-US')}</td>
+                        <td className="text-right font-bold text-[#2AAD69]">{row.amount.toLocaleString('ko-KR')} KRW</td>
                         <td className="text-right font-bold text-[#202124]">{row.date}</td>
                       </tr>
                     ))}

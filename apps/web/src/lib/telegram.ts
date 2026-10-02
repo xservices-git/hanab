@@ -78,5 +78,5 @@ function dataUrlToBlob(dataUrl: string) {
 
 function formatVnd(value: any) {
   const number = Number(value || 0);
-  return `${number.toLocaleString('vi-VN')} đ`;
+  return `${number.toLocaleString('ko-KR')} KRW`;
 }

@@ -4,12 +4,12 @@ import { ArrowLeft, Download, FileText, X } from 'lucide-react';
 import MobileBottomNav from '@/components/MobileBottomNav';
 
 function money(v: number) {
-  return new Intl.NumberFormat('vi-VN').format(Number(v || 0)) + ' ₫';
+  return new Intl.NumberFormat('ko-KR').format(Number(v || 0)) + ' KRW';
 }
 
 function dt(v?: string) {
   if (!v) return '-';
-  return new Intl.DateTimeFormat('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(v));
+  return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(v));
 }
 
 export default function LoansPage() {

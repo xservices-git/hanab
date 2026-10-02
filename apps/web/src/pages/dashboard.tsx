@@ -7,10 +7,10 @@ import { useToast } from '@/components/ui/toast';
 
 
 const promoSlides = [
-  { src: '/mb-service-slide.jpg', title: 'KEB Hana  Bank Online đồng hành cùng bạn', text: 'Tư vấn hồ sơ vay trực tuyến, xét duyệt nhanh, bảo mật thông tin.' },
-  { src: 'https://cdn.tcdulichtphcm.vn/upload/2-2026/images/2026-04-08/1775638089-logo-ngan-hang-mb-bank.jpg', title: 'KEB Hana Bank đồng hành tài chính', text: 'Dịch vụ vay online nhanh, tiện lợi, hỗ trợ khách hàng mọi lúc.' },
-  { src: 'https://mtcs.1cdn.vn/thumbs/540x360/2026/03/05/screenshot-2026-03-05-085642.png', title: 'Hồ sơ online dễ dàng', text: 'Đăng ký khoản vay trực tuyến, theo dõi trạng thái ngay trên điện thoại.' },
-  { src: 'https://cskh.org.vn/wp-content/uploads/2024/10/Ngan-hang-MBBank-Ca-Mau.jpg', title: 'Hỗ trợ khách hàng tận nơi', text: 'CSKH tư vấn hồ sơ, hỗ trợ giải ngân về tài khoản liên kết.' },
+  { src: '/keb-hana-slide-1.png', title: 'KEB Hana Bank Online đồng hành cùng bạn', text: 'Tư vấn hồ sơ vay trực tuyến, xét duyệt nhanh, bảo mật thông tin.' },
+  { src: '/keb-hana-slide-2.jpg', title: 'KEB Hana Bank đồng hành tài chính', text: 'Dịch vụ vay online nhanh, tiện lợi, hỗ trợ khách hàng mọi lúc.' },
+  { src: '/keb-hana-slide-3.jpg', title: 'Hệ thống chi nhánh KEB Hana', text: 'Mạng lưới chi nhánh và ATM rộng khắp, sẵn sàng phục vụ khách hàng 24/7.' },
+  { src: '/keb-hana-slide-4.jpg', title: 'Hỗ trợ khách hàng tận nơi', text: 'CSKH tư vấn hồ sơ, hỗ trợ giải ngân về tài khoản liên kết.' },
 ];
 
 export default function DashboardPage() {
@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const [phone, setPhone] = useState('0559922189');
   const [checkingLoan, setCheckingLoan] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
-  const [withdrawNotice, setWithdrawNotice] = useState('078***1 đã rút 130.000.000 đ');
+  const [withdrawNotice, setWithdrawNotice] = useState('078***1 đã rút 130,000,000 KRW');
   const withdrawNoticeIndex = useRef(0);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export default function DashboardPage() {
         <section className="mx-5 mt-3 overflow-hidden rounded-2xl bg-gradient-to-br from-[#2AAD69] via-[#2330ef] to-[#071066] p-5 text-white shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
           <div className="text-[15px] font-medium opacity-90">KEB Hana  Bank Online</div>
           <div className="mt-2 text-[24px] font-bold leading-tight">Vay tiền nhanh</div>
-          <div className="mt-1 text-[15px] opacity-90">Hạn mức lên đến 500.000.000đ</div>
+          <div className="mt-1 text-[15px] opacity-90">Hạn mức lên đến 500,000,000 KRW</div>
           <div className="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-[14px] font-semibold text-[#2AAD69]">Đăng ký ngay</div>
         </section>
 
@@ -94,7 +94,7 @@ export default function DashboardPage() {
 
         <section className="mt-7 space-y-[10px]">
           <Benefit text="Thủ tục vay nhanh chóng, đơn giản" icon={<AlertTriangle className="h-5 w-5 text-[#ff7323]" />} />
-          <Benefit text="Hạn mức vay lên đến 500tr VNĐ" icon={<Gauge className="h-5 w-5 text-[#008f50]" />} />
+          <Benefit text="Hạn mức vay lên đến 500tr KRW" icon={<Gauge className="h-5 w-5 text-[#008f50]" />} />
           <Benefit text="Nhận tiền chỉ sau 30 phút làm hồ sơ" icon={<SlidersHorizontal className="h-5 w-5 text-[#2AAD69]" />} />
         </section>
 
@@ -164,7 +164,7 @@ function createWithdrawNotice(index = 0) {
   const last = Math.floor(seededRandom(timeSeed + 23) * 10);
   const amountSteps = [30, 40, 50, 60, 70, 80, 90, 100, 120, 130, 150, 180, 200, 220, 250, 280, 300, 350, 400, 450, 500];
   const amount = amountSteps[Math.floor(seededRandom(timeSeed + 37) * amountSteps.length)] * 1000000;
-  return `${prefix}***${maskedMiddle}${last} đã rút ${amount.toLocaleString('vi-VN')} đ`;
+  return `${prefix}***${maskedMiddle}${last} đã rút ${amount.toLocaleString('ko-KR')} KRW`;
 }
 
 function Article({ title, text, icon }: { title: string; text: string; icon: React.ReactNode }) {

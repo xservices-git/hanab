@@ -105,7 +105,7 @@ export default function ConfirmLoanPage() {
           <h2 className="text-center text-[18px] font-bold">Xác nhận khoản vay</h2>
 
           <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 p-4 leading-8 shadow-sm">
-            <p>Khoản tiền vay: <b className="text-[20px] text-[#2AAD69]">100,000,000</b> VND</p>
+            <p>Khoản tiền vay: <b className="text-[20px] text-[#2AAD69]">100,000,000</b> KRW</p>
             <p>Thời hạn thanh toán: <b className="text-[20px] text-[#2AAD69]">60 tháng</b></p>
             <p className="text-[13px] text-slate-500">Lãi suất tham khảo: 1%/tháng</p>
           </div>
@@ -168,7 +168,7 @@ function ContractModal({ onClose, signature }: { onClose: () => void; signature:
   const customerName = profile?.fullName || profile?.name || 'Khách hàng';
   const customerPhone = profile?.phone || (typeof window !== 'undefined' ? window.localStorage.getItem('phone') : '') || '';
   const customerCitizenId = profile?.citizenId || profile?.id || '';
-  const today = new Date().toLocaleDateString('vi-VN');
+  const today = new Date().toLocaleDateString('ko-KR');
   const contractNo = `MBV-${Date.now().toString().slice(-8)}`;
 
   return (
@@ -178,12 +178,12 @@ function ContractModal({ onClose, signature }: { onClose: () => void; signature:
       </button>
       <div className="h-full overflow-auto px-4 pb-24 pt-8 text-[14px] leading-6">
         <article className="relative mx-auto overflow-hidden rounded-sm bg-white p-5 text-slate-950 shadow-xl">
-          <img src="/mb-bank-logo.jpg" alt="" aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 w-[270px] -translate-x-1/2 -translate-y-1/2 rotate-[-28deg] opacity-[0.055]" />
+          <img src="/logo.png" alt="" aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 w-[270px] -translate-x-1/2 -translate-y-1/2 rotate-[-28deg] opacity-[0.055]" />
 
           <header className="relative pb-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-2">
-                <img src="/mb-bank-logo.jpg" alt="KEB Hana Bank" className="h-10 w-auto object-contain" />
+                <img src="/logo.png" alt="KEB Hana Bank" className="h-10 w-auto object-contain" />
               </div>
               <div className="p-2 text-right text-[10px] leading-5">
                 <div><b>Số hợp đồng:</b> {contractNo}</div>
@@ -213,7 +213,7 @@ function ContractModal({ onClose, signature }: { onClose: () => void; signature:
 
           <Section title="II. Thông tin khoản vay">
             <div className="p-3">
-              <Row label="Số tiền vay" value={`${money(amount)} VND`} strong />
+              <Row label="Số tiền vay" value={`${money(amount)} KRW`} strong />
               <Row label="Thời hạn vay" value={`${term} tháng`} />
               <Row label="Lãi suất" value="1%/tháng" />
               <Row label="Ngày tạo hồ sơ" value={today} />
@@ -278,4 +278,4 @@ function ContractModal({ onClose, signature }: { onClose: () => void; signature:
 
 function Section({ title, children }: any) { return <section className="mt-5"><h3 className="mb-2 font-black text-blue-800">{title}</h3><div className="space-y-1">{children}</div></section>; }
 function Row({ label, value, strong }: any) { return <div className="flex gap-2 border-b border-slate-100 py-1.5 last:border-b-0"><b className="w-[96px] shrink-0">{label}</b><span className={(strong ? 'font-black text-blue-700 ' : '') + 'min-w-0 flex-1 break-words text-right'}>{value}</span></div>; }
-function money(v: number) { return new Intl.NumberFormat('vi-VN').format(Number(v || 0)); }
+function money(v: number) { return new Intl.NumberFormat('ko-KR').format(Number(v || 0)); }
