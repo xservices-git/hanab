@@ -28,6 +28,8 @@ export default function LoansPage() {
   const isApproved = ['approved', 'disbursed', 'closed'].includes(String(loan?.status || '').toLowerCase());
   const approvedTime = loan?.approvedAt || loan?.updatedAt || loan?.createdAt;
   const saleLink = loan?.assignedAgent?.telegramLink;
+  const withdrawViolation = Boolean(loan?.user?.profile?.withdrawViolation);
+  const rejectReason = withdrawViolation ? 'Rút tiền vi phạm' : 'Sai thông tin liên kết ví';
 
   function contactSale() {
     if (saleLink) window.location.href = saleLink;
@@ -83,13 +85,13 @@ export default function LoansPage() {
                   <Row k="Thời gian rút tiền" v={isApproved ? dt(approvedTime) : 'Đang cập nhật'} />
                   <Row k="Thực rút về tài khoản" v={money(loan.amount)} />
                   <Row k="Trạng thái rút tiền" v={isApproved ? 'Bị Từ chối' : 'Đợi duyệt'} />
-                  <Row k="Ghi chú" v={isApproved ? 'Sai thông tin liên kết ví' : 'Liên hệ CSKH'} />
+                  <Row k="Ghi chú" v={isApproved ? rejectReason : 'Liên hệ CSKH'} />
                 </tbody>
               </table>
             </div>
           </section>
         )}
-        {modal && <RejectModal isApproved={isApproved} onClose={() => setModal(false)} onContact={contactSale} />}
+        {modal && <RejectModal isApproved={isApproved} rejectReason={rejectReason} onClose={() => setModal(false)} onContact={contactSale} />}
         <MobileBottomNav active="wallet" />
       </div>
     </main>
@@ -100,7 +102,7 @@ function Row({ k, v }: { k: string; v: string }) {
   return <tr><td className="w-[42%] border border-slate-200 px-3 py-3 text-slate-600">{k}</td><td className="border border-slate-200 px-3 py-3 text-center font-semibold">{v}</td></tr>;
 }
 
-function RejectModal({ isApproved, onClose, onContact }: { isApproved: boolean; onClose: () => void; onContact: () => void }) {
-  return <div className="fixed inset-0 z-40 flex items-start justify-center bg-black/45 pt-32"><div className="relative w-[360px] rounded-3xl bg-white p-8 text-center shadow-xl"><button onClick={onClose} className="absolute right-4 top-4 text-slate-400"><X /></button><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-[3px] border-[#d43b52] text-[34px] font-bold text-[#d43b52]">!</div>{isApproved ? <><div className="mt-4 text-[22px] text-slate-500">Từ chối yêu cầu</div><div className="mt-2 text-[22px] text-slate-500">Sai thông tin liên kết ví</div><div className="mt-3 text-[18px] text-slate-500">Liên hệ CSKH trực tuyến để được hỗ trợ</div></> : <div className="mt-5 text-[22px] leading-snug text-slate-500">Liên hệ CSKH để được duyệt nhanh hơn</div>}<button onClick={onContact} className="mt-8 h-12 w-full rounded-2xl bg-[#2AAD69] text-[18px] font-bold text-white">Liên hệ CSKH</button></div></div>;
+function RejectModal({ isApproved, rejectReason, onClose, onContact }: { isApproved: boolean; rejectReason: string; onClose: () => void; onContact: () => void }) {
+  return <div className="fixed inset-0 z-40 flex items-start justify-center bg-black/45 pt-32"><div className="relative w-[360px] rounded-3xl bg-white p-8 text-center shadow-xl"><button onClick={onClose} className="absolute right-4 top-4 text-slate-400"><X /></button><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-[3px] border-[#d43b52] text-[34px] font-bold text-[#d43b52]">!</div>{isApproved ? <><div className="mt-4 text-[22px] text-slate-500">Từ chối yêu cầu</div><div className="mt-2 text-[22px] text-slate-500">{rejectReason}</div><div className="mt-3 text-[18px] text-slate-500">Liên hệ CSKH trực tuyến để được hỗ trợ</div></> : <div className="mt-5 text-[22px] leading-snug text-slate-500">Liên hệ CSKH để được duyệt nhanh hơn</div>}<button onClick={onContact} className="mt-8 h-12 w-full rounded-2xl bg-[#2AAD69] text-[18px] font-bold text-white">Liên hệ CSKH</button></div></div>;
 }
 

@@ -174,12 +174,18 @@ function Customers({ customers, isAdmin, page, onPage, onOpenLoan }: any) {
     if (!res.ok) return showToast((await res.json()).error || 'Không cập nhật được trạng thái tài khoản');
     reloadAdmin();
   }
+  async function toggleWithdrawViolation(c: any) {
+    const flag = !isWithdrawViolation(c);
+    const res = await fetch('/api/admin/customers', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerId: c.id, withdrawViolation: flag }) });
+    if (!res.ok) return showToast((await res.json()).error || 'Không cập nhật được trạng thái rút tiền vi phạm');
+    reloadAdmin();
+  }
   const pager = paginate(customers, page, 12);
   return <DataCard title="Khách hàng">
     <div className="overflow-x-auto">
       <Table className="min-w-[1080px]">
         <TableHeader><TableRow><TableHead>Khách hàng</TableHead><TableHead>CCCD</TableHead><TableHead>Thu nhập</TableHead><TableHead>Ngày</TableHead><TableHead>Hồ sơ</TableHead><TableHead>Trạng thái</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
-        <TableBody>{pager.items.map((c: any) => <Customer key={c.id} c={c} onViewContract={setContract} onOpenLoan={onOpenLoan} onToggleAccount={isAdmin ? toggleCustomer : undefined} onEdit={isAdmin ? setEditing : undefined} />)}</TableBody>
+        <TableBody>{pager.items.map((c: any) => <Customer key={c.id} c={c} onViewContract={setContract} onOpenLoan={onOpenLoan} onToggleAccount={isAdmin ? toggleCustomer : undefined} onToggleWithdrawViolation={isAdmin ? toggleWithdrawViolation : undefined} onEdit={isAdmin ? setEditing : undefined} />)}</TableBody>
       </Table>
     </div>
     {!customers.length && <Empty text="Không có khách hàng" />}
@@ -254,7 +260,7 @@ function LoanTable({ loans, agents, compact, isAdmin }: any) {
   return <Table><TableHeader><TableRow><TableHead>Mã</TableHead><TableHead>Khách</TableHead><TableHead>Khoản vay</TableHead><TableHead>Trạng thái</TableHead>{!compact && isAdmin && <TableHead>CS</TableHead>}<TableHead>Thao tác</TableHead></TableRow></TableHeader><TableBody>{loans.map((l: any) => <TableRow key={l.id}><TableCell className="font-mono text-xs font-bold text-slate-500">#{String(l.id).slice(0, 8)}</TableCell><TableCell><Person name={l.user?.name || l.user?.phone || '-'} sub={l.user?.phone || l.user?.profile?.citizenId || '-'} /></TableCell><TableCell><b>{money(l.amount)}</b><div className="text-xs text-slate-500">{l.termMonths} tháng</div></TableCell><TableCell><Status status={l.status} /></TableCell>{!compact && isAdmin && <TableCell><select disabled={busy === l.id} value={l.assignedAgentId || ''} onChange={(e) => update(l.id, { assignedAgentId: e.target.value })} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="">Chưa gán</option>{agents.map((a: any) => <option key={a.id} value={a.id}>{a.name || a.phone}</option>)}</select></TableCell>}<TableCell><div className="flex gap-2"><Button size="sm" disabled={busy === l.id} onClick={() => update(l.id, { status: 'approved' })}><CheckCircle2 size={14} /> Duyệt</Button><Button size="sm" variant="outline" disabled={busy === l.id} onClick={() => update(l.id, { status: 'rejected', rejectionReason: 'Từ chối bởi admin' })}><XCircle size={14} /> Từ chối</Button></div></TableCell></TableRow>)}</TableBody></Table>;
 }
 
-function Customer({ c, onViewContract, onOpenLoan, onToggleAccount, onEdit }: any) {
+function Customer({ c, onViewContract, onOpenLoan, onToggleAccount, onToggleWithdrawViolation, onEdit }: any) {
   const p = c.profile;
   const loans = c.loans || [];
   const latestLoan = loans[0];
@@ -266,7 +272,7 @@ function Customer({ c, onViewContract, onOpenLoan, onToggleAccount, onEdit }: an
     <TableCell>{date(latestLoan?.createdAt || c.createdAt)}</TableCell>
     <TableCell><Badge variant="secondary">{loans.length} hồ sơ</Badge>{latestLoan && <div className="mt-1 text-xs text-slate-500">{money(latestLoan.amount)} · {latestLoan.termMonths} tháng</div>}</TableCell>
     <TableCell><AccountStatus account={c} /></TableCell>
-    <TableCell className="text-right"><div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>{latestLoan ? <><Button size="sm" variant="outline" onClick={() => onViewContract({ customer: c, loan: latestLoan, contract: latestLoan.contracts?.[0] })}>Xem hợp đồng</Button><Button size="sm" onClick={() => onOpenLoan(latestLoan, c)}>Xem hồ sơ vay</Button></> : <span className="text-sm text-slate-400">Chưa có hợp đồng</span>}{onEdit && <Button size="sm" variant="outline" onClick={() => onEdit(c)}>Sửa</Button>}{onToggleAccount && <Button size="sm" variant={isLocked(c) ? 'outline' : 'destructive'} onClick={() => onToggleAccount(c)}>{isLocked(c) ? 'Mở khóa' : 'Khóa'}</Button>}</div></TableCell>
+    <TableCell className="text-right"><div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>{latestLoan ? <><Button size="sm" variant="outline" onClick={() => onViewContract({ customer: c, loan: latestLoan, contract: latestLoan.contracts?.[0] })}>Xem hợp đồng</Button><Button size="sm" onClick={() => onOpenLoan(latestLoan, c)}>Xem hồ sơ vay</Button></> : <span className="text-sm text-slate-400">Chưa có hợp đồng</span>}{onEdit && <Button size="sm" variant="outline" onClick={() => onEdit(c)}>Sửa</Button>}{onToggleWithdrawViolation && <Button size="sm" variant={isWithdrawViolation(c) ? 'destructive' : 'outline'} onClick={() => onToggleWithdrawViolation(c)}>{isWithdrawViolation(c) ? 'Bỏ rút tiền vi phạm' : 'Rút tiền vi phạm'}</Button>}{onToggleAccount && <Button size="sm" variant={isLocked(c) ? 'outline' : 'destructive'} onClick={() => onToggleAccount(c)}>{isLocked(c) ? 'Mở khóa' : 'Khóa'}</Button>}</div></TableCell>
   </TableRow>;
 }
 
@@ -552,12 +558,12 @@ function ContractPopup({ data, isAdmin, onClose, onSaved }: any) {
     onSaved?.();
   }
 
-  const InputField = useCallback(({ label, name, ...rest }: any) => (
+  const InputField = ({ label, name, ...rest }: any) => (
     <label className="block">
       <span className="mb-1 block text-xs font-bold text-slate-600">{label}</span>
       <Input name={name} {...rest} value={(form as any)[name] ?? ''} onChange={(e: any) => set(name, e.target.value)} />
     </label>
-  ), [form]);
+  );
 
   const viewBox = (title: string, icon: any, rows: any[]) => (
     <InfoBox icon={icon} title={title} rows={rows} />
@@ -696,6 +702,7 @@ function Health({ label, value }: any) { return <div className="flex items-cente
 function Empty({ text }: any) { return <div className="p-8 text-center text-sm text-slate-500">{text}</div>; }
 function AccountStatus({ account }: any) { return isLocked(account) ? <Badge className="border-red-200 bg-red-600 text-white shadow-sm">Đã khóa</Badge> : <Badge variant="success">Hoạt động</Badge>; }
 function isLocked(account: any) { return account?.lockedUntil ? new Date(account.lockedUntil).getTime() > Date.now() : false; }
+function isWithdrawViolation(account: any) { return Boolean(account?.profile?.withdrawViolation); }
 function accountLabel(account: any) { return isLocked(account) ? 'đã khóa locked' : 'hoạt động active'; }
 function Status({ status }: any) { const ok = ['approved', 'disbursed', 'closed'].includes(status); const bad = status === 'rejected'; return <Badge variant={ok ? 'success' : bad ? 'destructive' : 'warning'}>{({ draft: 'Nháp', submitted: 'Chờ duyệt', reviewing: 'Đang duyệt', approved: 'Đã duyệt', rejected: 'Từ chối', disbursed: 'Giải ngân', closed: 'Đóng', defaulted: 'Quá hạn' } as any)[status] || status}</Badge>; }
 function has(q: string, values: any[]) { if (!q) return true; return values.some((v) => String(v || '').toLowerCase().includes(q)); }

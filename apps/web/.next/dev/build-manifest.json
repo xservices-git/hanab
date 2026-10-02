@@ -22,25 +22,15 @@
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/choose-loan": [
+    "/confirm-loan": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/choose-loan.js"
+      "static/chunks/pages/confirm-loan.js"
     ],
-    "/dashboard": [
+    "/loan-success": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/dashboard.js"
-    ],
-    "/kyc": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/kyc.js"
-    ],
-    "/verify": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/verify.js"
+      "static/chunks/pages/loan-success.js"
     ]
   }
 }

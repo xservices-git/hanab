@@ -52,13 +52,13 @@ function UploadBox({ id, label, image, error, onPick }: { id: string; label: str
 
 async function imageFileToDataUrl(file: File) {
   const bitmap = await createImageBitmap(file);
-  const maxSide = 900;
+  const maxSide = 800;
   const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement('canvas');
   canvas.width = Math.max(1, Math.round(bitmap.width * scale));
   canvas.height = Math.max(1, Math.round(bitmap.height * scale));
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Kh?ng th? x? l? ?nh');
+  if (!ctx) throw new Error('Không xử lý được ảnh');
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL('image/jpeg', 0.72);
+  return canvas.toDataURL('image/jpeg', 0.65);
 }

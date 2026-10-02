@@ -36,68 +36,85 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         select: { id: true },
       });
 
-      const profileRecord = profile ? await prisma.customerProfile.upsert({
-        where: { userId: payload.id as string },
-        create: {
-          userId: payload.id as string,
-          fullName: profile.name || null,
-          citizenId: profile.id || null,
-          dateOfBirth: parseDate(profile.birthday),
-          gender: profile.gender || null,
-          address: profile.address || null,
-          jobTitle: profile.job || null,
-          monthlyIncome: parseIncome(profile.income),
-          emergencyName: profile.relativeName || null,
-          emergencyPhone: profile.relativePhone || null,
-          emergencyRelation: profile.relation || null,
-        },
-        update: {
-          fullName: profile.name || null,
-          citizenId: profile.id || null,
-          dateOfBirth: parseDate(profile.birthday),
-          gender: profile.gender || null,
-          address: profile.address || null,
-          jobTitle: profile.job || null,
-          monthlyIncome: parseIncome(profile.income),
-          emergencyName: profile.relativeName || null,
-          emergencyPhone: profile.relativePhone || null,
-          emergencyRelation: profile.relation || null,
-        },
-      }) : null;
+      const profileData = profile ? {
+        fullName: profile.name || null,
+        citizenId: profile.id || null,
+        dateOfBirth: parseDate(profile.birthday),
+        gender: profile.gender || null,
+        address: profile.address || null,
+        jobTitle: profile.job || null,
+        monthlyIncome: parseIncome(profile.income),
+        emergencyName: profile.relativeName || null,
+        emergencyPhone: profile.relativePhone || null,
+        emergencyRelation: profile.relation || null,
+      } : null;
 
-      if (profile?.name) await prisma.user.update({ where: { id: payload.id as string }, data: { name: profile.name } });
+      const bankData = (profileRecord: any) => profileRecord && bank?.account && bank?.owner && bank?.bank ? {
+        customerProfileId: profileRecord.id,
+        bankName: bank.bank,
+        accountNumber: bank.account,
+        accountName: bank.owner,
+        isPrimary: true,
+      } : null;
 
-      if (profileRecord && bank?.account && bank?.owner && bank?.bank) {
-        await prisma.bankAccount.create({
-          data: { customerProfileId: profileRecord.id, bankName: bank.bank, accountNumber: bank.account, accountName: bank.owner, isPrimary: true },
-        });
-      }
+      const kycData = (profileRecord: any) => profileRecord && kyc ? {
+        customerProfileId: profileRecord.id,
+        status: 'submitted',
+        frontIdUrl: safeKycImage(kyc.front),
+        backIdUrl: safeKycImage(kyc.back),
+        selfieUrl: safeKycImage(kyc.face),
+      } : null;
 
-      if (profileRecord && kyc) {
-        await prisma.kycProfile.create({
+      const signatureData = safeSignature(signatureImage);
+      const signatureIp = req.headers['x-forwarded-for']?.toString().split(',')[0] || req.socket.remoteAddress || null;
+
+      // Use transaction to keep a single DB connection alive
+      const loan = await prisma.$transaction(async (tx) => {
+        const profileRecord = profileData
+          ? await tx.customerProfile.upsert({
+              where: { userId: payload.id as string },
+              create: { userId: payload.id as string, ...profileData },
+              update: profileData,
+            })
+          : null;
+
+        if (profile?.name) {
+          await tx.user.update({ where: { id: payload.id as string }, data: { name: profile.name } });
+        }
+
+        if (bankData(profileRecord)) {
+          await tx.bankAccount.create({ data: bankData(profileRecord)! });
+        }
+
+        if (kycData(profileRecord)) {
+          await tx.kycProfile.create({ data: kycData(profileRecord)! });
+        }
+
+        return tx.loan.create({
           data: {
-            customerProfileId: profileRecord.id,
+            userId: payload.id as string,
+            assignedAgentId: agent?.id || null,
+            amount: parseFloat(amount),
+            termMonths: parseInt(termMonths),
+            interestRate: parseFloat(interestRate) || 1.5,
             status: 'submitted',
-            frontIdUrl: safeKycImage(kyc.front),
-            backIdUrl: safeKycImage(kyc.back),
-            selfieUrl: safeKycImage(kyc.face),
+            notes: notes?.trim() || profile?.purpose || null,
+            contracts: {
+              create: {
+                status: 'signed',
+                signedAt: new Date(),
+                signatureImage: signatureData,
+                signatureIp,
+              },
+            },
+          },
+          include: {
+            assignedAgent: { select: { id: true, name: true, phone: true, telegramLink: true } },
+            contracts: true,
           },
         });
-      }
-
-      const loan = await prisma.loan.create({
-        data: {
-          userId: payload.id as string,
-          assignedAgentId: agent?.id || null,
-          amount: parseFloat(amount),
-          termMonths: parseInt(termMonths),
-          interestRate: parseFloat(interestRate) || 1.5,
-          status: 'submitted',
-          notes: notes?.trim() || profile?.purpose || null,
-          contracts: { create: { status: 'signed', signedAt: new Date(), signatureImage: safeSignature(signatureImage), signatureIp: req.headers['x-forwarded-for']?.toString().split(',')[0] || req.socket.remoteAddress || null } },
-        },
-        include: { assignedAgent: { select: { id: true, name: true, phone: true, telegramLink: true } }, contracts: true },
       });
+
       await notifyNewLoan({ loan, profile, bank, kyc, assignedAgent: loan.assignedAgent, signatureImage }).catch((error) => console.error('notify loan telegram error', error));
       return res.status(201).json({ ok: true, data: loan });
     }

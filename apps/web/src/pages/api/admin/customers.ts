@@ -31,6 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       emergencyName,
       emergencyPhone,
       emergencyRelation,
+      withdrawViolation,
       // Bank account fields (replace if provided)
       bankName,
       accountNumber,
@@ -106,6 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (emergencyName !== undefined) profileData.emergencyName = emergencyName?.trim() || null;
     if (emergencyPhone !== undefined) profileData.emergencyPhone = emergencyPhone?.trim() || null;
     if (emergencyRelation !== undefined) profileData.emergencyRelation = emergencyRelation?.trim() || null;
+    if (withdrawViolation !== undefined) profileData.withdrawViolation = Boolean(withdrawViolation);
 
     if (Object.keys(profileData).length) {
       await prisma.customerProfile.upsert({
@@ -229,7 +231,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       lastLoginAt: true,
       createdAt: true,
       profile: {
-        include: { kycs: { orderBy: { createdAt: 'desc' }, take: 1 }, bankAccounts: true },
+        select: {
+          withdrawViolation: true,
+          fullName: true,
+          citizenId: true,
+          dateOfBirth: true,
+          gender: true,
+          address: true,
+          jobTitle: true,
+          employerName: true,
+          monthlyIncome: true,
+          emergencyName: true,
+          emergencyPhone: true,
+          emergencyRelation: true,
+          kycs: { orderBy: { createdAt: 'desc' }, take: 1 },
+          bankAccounts: true,
+        },
       },
       loans: {
         where: actor.role === 'admin' ? {} : { assignedAgentId: actor.id },

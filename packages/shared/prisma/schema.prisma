@@ -89,6 +89,7 @@ model CustomerProfile {
   emergencyName     String?
   emergencyPhone    String?
   emergencyRelation String?
+  withdrawViolation Boolean   @default(false)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
