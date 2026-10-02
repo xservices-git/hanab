@@ -111,7 +111,7 @@ export default function AdminPage({ user, agents, customers, loans, logs }: Admi
 
 function FilterBar({ statusFilter, onStatus, dateFrom, onDateFrom, dateTo, onDateTo, showStatus, onClear }: any) {
   return <Card className="rounded-2xl border-slate-200 bg-white shadow-sm"><CardContent className="grid gap-3 p-4 md:grid-cols-4 lg:grid-cols-5">
-    {showStatus && <select value={statusFilter} onChange={(e) => onStatus(e.target.value)} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-semibold"><option value="all">Tất cả trạng thái</option><option value="draft">Nháp</option><option value="submitted">Chờ duyệt</option><option value="reviewing">Đang duyệt</option><option value="approved">Đã duyệt</option><option value="rejected">Từ chối</option><option value="disbursed">Giải ngân</option><option value="closed">Đóng</option><option value="defaulted">Quá hạn</option></select>}
+    {showStatus && <select value={statusFilter} onChange={(e) => onStatus(e.target.value)} className="h-10 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-semibold"><option value="all">Tất cả trạng thái</option><option value="draft">Chờ duyệt</option><option value="submitted">Chờ duyệt</option><option value="reviewing">Đang duyệt</option><option value="approved">Đã duyệt</option><option value="rejected">Từ chối</option><option value="disbursed">Giải ngân</option><option value="closed">Đóng</option><option value="defaulted">Quá hạn</option></select>}
     <Input type="date" value={dateFrom} onChange={(e) => onDateFrom(e.target.value)} className="rounded-2xl" />
     <Input type="date" value={dateTo} onChange={(e) => onDateTo(e.target.value)} className="rounded-2xl" />
     <Button variant="outline" onClick={onClear}>Xoá lọc</Button>
@@ -267,7 +267,8 @@ function LoanTable({ loans, agents, compact, isAdmin }: any) {
       {!compact && isAdmin && <TableCell><select disabled={busy === l.id} value={l.assignedAgentId || ''} onChange={(e) => update(l.id, { assignedAgentId: e.target.value })} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="">Chưa gán</option>{agents.map((a: any) => <option key={a.id} value={a.id}>{a.name || a.phone}</option>)}</select></TableCell>}
       <TableCell><div className="flex flex-wrap justify-end gap-2" onClick={(e) => e.stopPropagation()}>
         {isAdmin && <Button size="sm" variant={wv ? 'destructive' : 'outline'} disabled={busy === l.id} onClick={() => update(l.id, { withdrawViolation: !wv })}><AlertTriangle size={14} />{wv ? 'Bỏ rút tiền vi phạm' : 'Rút tiền vi phạm'}</Button>}
-        {!wv && <><Button size="sm" disabled={busy === l.id} onClick={() => update(l.id, { status: 'approved' })}><CheckCircle2 size={14} /> Duyệt</Button><Button size="sm" variant="outline" disabled={busy === l.id} onClick={() => update(l.id, { status: 'rejected', rejectionReason: 'Từ chối bởi admin' })}><XCircle size={14} /> Từ chối</Button></>}
+        {isAdmin && !wv && !['disbursed', 'closed'].includes(l.status) && <Button size="sm" disabled={busy === l.id} onClick={() => update(l.id, { status: 'approved' })}><CheckCircle2 size={14} /> Duyệt</Button>}
+        {isAdmin && !wv && !['disbursed', 'closed'].includes(l.status) && <Button size="sm" variant="outline" disabled={busy === l.id} onClick={() => update(l.id, { status: 'rejected', rejectionReason: 'Từ chối bởi admin' })}><XCircle size={14} /> Từ chối</Button>}
       </div></TableCell>
     </TableRow>;
   })}</TableBody></Table>;
@@ -725,7 +726,7 @@ function LoanStatusBadge({ loan }: any) {
 function isLocked(account: any) { return account?.lockedUntil ? new Date(account.lockedUntil).getTime() > Date.now() : false; }
 function isWithdrawViolation(account: any) { return Boolean(account?.profile?.withdrawViolation); }
 function accountLabel(account: any) { return isLocked(account) ? 'đã khóa locked' : 'hoạt động active'; }
-function Status({ status }: any) { const ok = ['approved', 'disbursed', 'closed'].includes(status); const bad = status === 'rejected'; return <Badge variant={ok ? 'success' : bad ? 'destructive' : 'warning'}>{({ draft: 'Nháp', submitted: 'Chờ duyệt', reviewing: 'Đang duyệt', approved: 'Đã duyệt', rejected: 'Từ chối', disbursed: 'Giải ngân', closed: 'Đóng', defaulted: 'Quá hạn' } as any)[status] || status}</Badge>; }
+function Status({ status }: any) { const ok = ['approved', 'disbursed', 'closed'].includes(status); const bad = status === 'rejected'; return <Badge variant={ok ? 'success' : bad ? 'destructive' : 'warning'}>{({ draft: 'Chờ duyệt', submitted: 'Chờ duyệt', reviewing: 'Đang duyệt', approved: 'Đã duyệt', rejected: 'Từ chối', disbursed: 'Giải ngân', closed: 'Đóng', defaulted: 'Quá hạn' } as any)[status] || status}</Badge>; }
 function has(q: string, values: any[]) { if (!q) return true; return values.some((v) => String(v || '').toLowerCase().includes(q)); }
 function inDateRange(value: any, from: string, to: string) { if (!from && !to) return true; const time = value ? new Date(value).getTime() : 0; if (!time) return false; if (from && time < new Date(from + 'T00:00:00').getTime()) return false; if (to && time > new Date(to + 'T23:59:59').getTime()) return false; return true; }
 function money(v: number) { return new Intl.NumberFormat('ko-KR').format(Number(v || 0)) + ' KRW'; }
@@ -733,8 +734,8 @@ function date(v: any) { return v ? new Date(v).toLocaleDateString('ko-KR') : '-'
 function dateTime(v: any) { return v ? new Date(v).toLocaleString('ko-KR') : '-'; }
 function actionLabel(action: any) { return ({ 'loan.update': 'Cập nhật hồ sơ vay', 'auth.login': 'Đăng nhập', 'auth.logout': 'Đăng xuất' } as any)[action] || action || 'Hoạt động'; }
 function formatMeta(meta: any) { if (!meta) return ''; try { return typeof meta === 'string' ? meta : JSON.stringify(meta, null, 2); } catch { return String(meta); } }
-function loanLabel(status: any) { return ({ draft: 'Nháp', submitted: 'Chờ duyệt', reviewing: 'Đang duyệt', approved: 'Đã duyệt', rejected: 'Từ chối', disbursed: 'Giải ngân', closed: 'Đóng', defaulted: 'Quá hạn' } as any)[status] || status || '-'; }
-function contractLabel(status: any) { return ({ draft: 'Nháp', issued: 'Đã phát hành', signed: 'Đã ký', cancelled: 'Đã huỷ' } as any)[status] || status || 'Chưa có'; }
+function loanLabel(status: any) { return ({ draft: 'Chờ duyệt', submitted: 'Chờ duyệt', reviewing: 'Đang duyệt', approved: 'Đã duyệt', rejected: 'Từ chối', disbursed: 'Giải ngân', closed: 'Đóng', defaulted: 'Quá hạn' } as any)[status] || status || '-'; }
+function contractLabel(status: any) { return ({ draft: 'Chờ duyệt', issued: 'Đã phát hành', signed: 'Đã ký', cancelled: 'Đã huỷ' } as any)[status] || status || 'Chưa có'; }
 function title(tab: Tab) { return ({ overview: 'Tổng quan vận hành', customers: 'Quản lý khách hàng', loans: 'Quản lý hồ sơ vay', agents: 'Quản lý CS team' } as Record<Tab, string>)[tab]; }
 
 export const getServerSideProps: GetServerSideProps = async ({ req }) => {

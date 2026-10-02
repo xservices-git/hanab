@@ -21,12 +21,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   const user = await prisma.user.findUnique({
     where: { id: payload.id as string },
-    select: { id: true, email: true, name: true, role: true },
+    select: { id: true, email: true, name: true, role: true, lockedUntil: true, profile: { select: { withdrawViolation: true } } },
   });
 
   if (!user) {
     return res.status(404).json({ ok: false, error: 'User not found' });
   }
 
-  return res.status(200).json({ ok: true, data: user });
+  const u = user as any;
+  const locked = u.lockedUntil ? new Date(u.lockedUntil).getTime() > Date.now() : false;
+  const withdrawViolation = Boolean(u.profile?.withdrawViolation);
+
+  return res.status(200).json({ ok: true, data: { ...u, locked, withdrawViolation } });
 }

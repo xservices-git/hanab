@@ -31,14 +31,18 @@ export default function ChooseLoanPage() {
     fetch('/api/auth/me')
       .then((res) => {
         if (!res.ok) throw new Error('unauthorized');
-        return fetch('/api/loans');
-      })
-      .then((res) => {
-        if (!res.ok) throw new Error('unauthorized');
         return res.json();
       })
-      .then((json) => {
-        if (Array.isArray(json?.data) && json.data.length > 0) deny('Bạn có hồ sơ đang đợi, vui lòng liên hệ CSKH');
+      .then(async (json) => {
+        const me = json?.data || {};
+        const locked = Boolean(me.locked) || (me.lockedUntil ? new Date(me.lockedUntil).getTime() > Date.now() : false);
+        const withdrawViolation = Boolean(me.withdrawViolation);
+        if (locked) return deny('Tài khoản của bạn đã bị khóa, vui lòng liên hệ CSKH');
+        if (withdrawViolation) return deny('Từ chối yêu cầu');
+        const r = await fetch('/api/loans');
+        if (!r.ok) throw new Error('unauthorized');
+        const data = await r.json();
+        if (Array.isArray(data?.data) && data.data.length > 0) deny('Bạn có hồ sơ đang đợi, vui lòng liên hệ CSKH');
       })
       .catch(() => { if (alive) router.replace('/login'); });
 

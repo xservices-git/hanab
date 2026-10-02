@@ -4,8 +4,8 @@
   ],
   "devFiles": [],
   "lowPriorityFiles": [
-    "static/QBcJnfqeZOvQFF6PleSTM/_buildManifest.js",
-    "static/QBcJnfqeZOvQFF6PleSTM/_ssgManifest.js"
+    "static/Qm27u6zWmfN16Ng9XLEx4/_buildManifest.js",
+    "static/Qm27u6zWmfN16Ng9XLEx4/_ssgManifest.js"
   ],
   "rootMainFiles": [
     "static/chunks/webpack-91c6f648b3ca5886.js",
@@ -40,7 +40,7 @@
       "static/chunks/main-e0f3109a24a8f147.js",
       "static/chunks/409-abd22faae47e8bcb.js",
       "static/chunks/616-34f4b4330d1e0ba0.js",
-      "static/chunks/pages/admin-61aced149b08e62d.js"
+      "static/chunks/pages/admin-a85297487db57122.js"
     ],
     "/agent": [
       "static/chunks/webpack-91c6f648b3ca5886.js",
@@ -70,7 +70,7 @@
       "static/chunks/framework-4e4fd07f0b9d59e4.js",
       "static/chunks/main-e0f3109a24a8f147.js",
       "static/chunks/203-7a9a2ec7357fbf4c.js",
-      "static/chunks/pages/choose-loan-fe7aec82ba269dec.js"
+      "static/chunks/pages/choose-loan-cb153497e499291d.js"
     ],
     "/confirm-loan": [
       "static/chunks/webpack-91c6f648b3ca5886.js",

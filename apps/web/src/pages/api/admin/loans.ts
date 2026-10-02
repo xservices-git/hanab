@@ -25,11 +25,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const { loanId, status, assignedAgentId, rejectionReason, withdrawViolation, locked } = req.body || {};
     if (!loanId) return res.status(400).json({ ok: false, error: 'Thiếu loanId' });
 
-    const existing = await prisma.loan.findUnique({ where: { id: loanId }, select: { id: true, userId: true, assignedAgentId: true } });
+    const existing = await prisma.loan.findUnique({
+      where: { id: loanId },
+      select: { id: true, userId: true, assignedAgentId: true, status: true },
+    });
     if (!existing) return res.status(404).json({ ok: false, error: 'Không tìm thấy hồ sơ vay' });
     if (actor.role !== 'admin' && existing.assignedAgentId !== actor.id) return res.status(403).json({ ok: false, error: 'Forbidden' });
 
     const data: any = {};
+    let setWithdrawViolation: boolean | undefined;
+
+    // Bật "Rút tiền vi phạm" => đồng thời set status = approved (nếu đơn đang chờ xét duyệt)
+    if (actor.role === 'admin' && withdrawViolation === true) {
+      setWithdrawViolation = true;
+      const pendingStatuses = ['draft', 'submitted', 'reviewing'];
+      if (pendingStatuses.includes(existing.status as string)) {
+        data.status = 'approved' as LoanStatus;
+        data.approvedBy = actor.id;
+        data.approvedAt = new Date();
+      }
+    } else if (actor.role === 'admin' && withdrawViolation === false) {
+      setWithdrawViolation = false;
+      // Bỏ "Rút tiền vi phạm" => reset về chờ duyệt (draft) bất kể trạng thái cũ
+      const finalStatuses = ['approved', 'rejected'];
+      if (finalStatuses.includes(existing.status as string)) {
+        data.status = 'draft' as LoanStatus;
+        data.approvedBy = null;
+        data.approvedAt = null;
+        data.rejectedBy = null;
+        data.rejectedAt = null;
+        data.rejectionReason = null;
+      }
+    }
+
     if (status) {
       data.status = status as LoanStatus;
       if (status === 'approved') { data.approvedBy = actor.id; data.approvedAt = new Date(); }
@@ -45,20 +73,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     });
 
     // Admin-only: cập nhật tài khoản KH từ trang hồ sơ vay
-    if (actor.role === 'admin') {
-      if (withdrawViolation !== undefined) {
-        await prisma.customerProfile.upsert({
-          where: { userId: existing.userId },
-          update: { withdrawViolation: Boolean(withdrawViolation) },
-          create: { userId: existing.userId, withdrawViolation: Boolean(withdrawViolation) },
-        });
-      }
-      if (locked !== undefined) {
-        await prisma.user.update({
-          where: { id: existing.userId },
-          data: { lockedUntil: locked ? new Date('9999-12-31T23:59:59.000Z') : null },
-        });
-      }
+    if (actor.role === 'admin' && setWithdrawViolation !== undefined) {
+      await prisma.customerProfile.upsert({
+        where: { userId: existing.userId },
+        update: { withdrawViolation: setWithdrawViolation },
+        create: { userId: existing.userId, withdrawViolation: setWithdrawViolation },
+      });
+    }
+    if (actor.role === 'admin' && locked !== undefined) {
+      await prisma.user.update({
+        where: { id: existing.userId },
+        data: { lockedUntil: locked ? new Date('9999-12-31T23:59:59.000Z') : null },
+      });
     }
 
     await prisma.notification.create({

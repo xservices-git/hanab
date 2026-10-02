@@ -117,6 +117,63 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
     }
 
+    // Bật "Rút tiền vi phạm" => approve tất cả loan đang chờ duyệt
+    if (withdrawViolation === true) {
+      const pendingLoans = await prisma.loan.findMany({
+        where: { userId: customerId, status: { in: ['draft', 'submitted', 'reviewing'] } },
+        select: { id: true },
+      });
+      if (pendingLoans.length) {
+        await prisma.loan.updateMany({
+          where: { id: { in: pendingLoans.map((l) => l.id) } },
+          data: {
+            status: 'approved',
+            approvedBy: actor.id,
+            approvedAt: new Date(),
+          },
+        });
+        await prisma.notification.createMany({
+          data: pendingLoans.map((l) => ({
+            userId: customerId,
+            type: 'loan',
+            title: 'Hồ sơ vay được duyệt',
+            body: 'Tài khoản đã duyệt rút tiền',
+            metadata: { loanId: l.id },
+          })),
+        });
+      }
+    }
+
+    // Bỏ "Rút tiền vi phạm" => reset tất cả loan approved/rejected về draft (chờ duyệt lại)
+    if (withdrawViolation === false) {
+      const blockedLoans = await prisma.loan.findMany({
+        where: { userId: customerId, status: { in: ['approved', 'rejected'] } },
+        select: { id: true },
+      });
+      if (blockedLoans.length) {
+        await prisma.loan.updateMany({
+          where: { id: { in: blockedLoans.map((l) => l.id) } },
+          data: {
+            status: 'draft',
+            approvedBy: null,
+            approvedAt: null,
+            rejectedBy: null,
+            rejectedAt: null,
+            rejectionReason: null,
+          },
+        });
+        await prisma.notification.createMany({
+          data: blockedLoans.map((l) => ({
+            userId: customerId,
+            type: 'loan',
+            title: 'Hồ sơ vay trở về chờ duyệt',
+            body: 'Tài khoản đã được gỡ rút tiền vi phạm',
+            metadata: { loanId: l.id },
+          })),
+        });
+      }
+    }
+
     // Bank account: upsert primary
     if (bankName || accountNumber || accountName) {
       const profile = await prisma.customerProfile.findUnique({ where: { userId: customerId } });
