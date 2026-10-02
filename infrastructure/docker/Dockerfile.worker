@@ -1,0 +1,30 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json package-lock.json* ./
+COPY apps/worker/package.json ./apps/worker/
+COPY packages/shared/package.json ./packages/shared/
+RUN npm ci
+
+FROM deps AS build
+COPY packages/shared ./packages/shared
+COPY apps/worker ./apps/worker
+RUN cd packages/shared && npx prisma generate && npm run build
+RUN cd apps/worker && npm run build
+
+FROM base AS runner
+ENV NODE_ENV=production
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 worker
+
+COPY --from=build /app/apps/worker/dist ./dist
+COPY --from=build /app/packages/shared/dist ./packages/shared/dist
+COPY --from=build /app/packages/shared/prisma ./packages/shared/prisma
+COPY --from=build /app/node_modules ./node_modules
+
+RUN chown -R worker:nodejs /app
+USER worker
+
+EXPOSE 3001
+CMD ["node", "dist/index.js"]

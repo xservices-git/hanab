@@ -1,0 +1,27 @@
+node_modules/
+dist/
+.next/
+.env.local
+.env.production
+*.log
+.DS_Store
+# env/secrets
+.env.*
+!.env.example
+# build/cache
+.turbo/
+.cache/
+coverage/
+# OS/editor
+Thumbs.db
+.vscode/
+.idea/
+.artifacts/
+.tmp*
+_patch*.py
+state/
+cookies.txt
+login-body.json
+*.tsbuildinfo
+apps/**/tmp_*.py
+apps/**/tmp*.py

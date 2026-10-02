@@ -1,0 +1,227 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  user
+  agent
+  admin
+}
+
+enum LoanStatus {
+  draft
+  submitted
+  reviewing
+  approved
+  rejected
+  disbursed
+  closed
+  defaulted
+}
+
+enum KycStatus {
+  pending
+  submitted
+  verified
+  rejected
+}
+
+enum ContractStatus {
+  draft
+  issued
+  signed
+  cancelled
+}
+
+enum NotificationType {
+  info
+  success
+  warning
+  error
+  loan
+  kyc
+  system
+}
+
+model User {
+  id                   String    @id @default(cuid())
+  email                String?   @unique
+  telegramLink         String?
+  phone                String?   @unique
+  passwordHash         String
+  name                 String?
+  role                 UserRole  @default(user)
+  failedLoginAttempts  Int       @default(0)
+  lockedUntil          DateTime?
+  lastLoginAt          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  profile              CustomerProfile?
+  loans                Loan[]
+  assignedLoans        Loan[]    @relation("AssignedAgentLoans")
+  sessions             Session[]
+  activities           ActivityLog[]
+  notifications        Notification[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+}
+
+model CustomerProfile {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName          String?
+  citizenId         String?   @unique
+  dateOfBirth       DateTime?
+  gender            String?
+  address           String?   @db.Text
+  jobTitle          String?
+  employerName      String?
+  monthlyIncome     Float?
+  emergencyName     String?
+  emergencyPhone    String?
+  emergencyRelation String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  kycs              KycProfile[]
+  bankAccounts      BankAccount[]
+
+  @@index([citizenId])
+  @@index([createdAt])
+}
+
+model KycProfile {
+  id                String    @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  status            KycStatus @default(pending)
+  frontIdUrl        String?   @db.LongText
+  backIdUrl         String?   @db.LongText
+  selfieUrl         String?   @db.LongText
+  rejectionReason   String?   @db.Text
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([customerProfileId])
+  @@index([status])
+}
+
+model BankAccount {
+  id                String    @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  bankName          String
+  accountNumber     String
+  accountName       String
+  isPrimary         Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([customerProfileId])
+  @@index([bankName])
+}
+
+model Loan {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedAgentId String?
+  assignedAgent   User?     @relation("AssignedAgentLoans", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  amount        Float
+  termMonths    Int
+  interestRate  Float
+  status        LoanStatus  @default(draft)
+  approvedBy    String?
+  approvedAt    DateTime?
+  rejectedBy    String?
+  rejectedAt    DateTime?
+  rejectionReason String?   @db.Text
+  disbursedAt   DateTime?
+  notes         String?     @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  contracts     Contract[]
+
+  @@index([userId])
+  @@index([assignedAgentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Contract {
+  id          String         @id @default(cuid())
+  loanId      String
+  loan        Loan           @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  status      ContractStatus @default(draft)
+  fileUrl     String?
+  signatureImage String?       @db.LongText
+  signedAt    DateTime?
+  signatureIp String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([loanId])
+  @@index([status])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType @default(info)
+  title     String
+  body      String?          @db.Text
+  readAt    DateTime?
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([readAt])
+  @@index([createdAt])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  ip        String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action     String
+  resource   String?
+  resourceId String?
+  metadata   Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([resourceId])
+  @@index([createdAt])
+}

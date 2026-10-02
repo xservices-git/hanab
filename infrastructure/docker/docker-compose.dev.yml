@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=vay365
+      - MYSQL_USER=vay365
+      - MYSQL_PASSWORD=vay365password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data-dev:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  mysql-data-dev:

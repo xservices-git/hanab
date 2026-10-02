@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/ssl:/etc/letsencrypt:ro
+      - certbot-data:/etc/letsencrypt
+    depends_on:
+      - web
+      - worker
+    restart: unless-stopped
+    networks:
+      - vay365
+
+  web:
+    build:
+      context: ../
+      dockerfile: infrastructure/docker/Dockerfile.web
+    environment:
+      - DATABASE_URL=mysql://vay365:${MYSQL_PASSWORD}@mysql:3306/vay365
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=redis://redis:6379
+      - NEXT_PUBLIC_APP_URL=https://giaingan365days.online
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - vay365
+
+  worker:
+    build:
+      context: ../
+      dockerfile: infrastructure/docker/Dockerfile.worker
+    environment:
+      - DATABASE_URL=mysql://vay365:${MYSQL_PASSWORD}@mysql:3306/vay365
+      - REDIS_URL=redis://redis:6379
+      - CORS_ORIGIN=https://giaingan365days.online
+      - PORT=3001
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - vay365
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=vay365
+      - MYSQL_USER=vay365
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - vay365
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - vay365
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - certbot-data:/etc/letsencrypt
+      - ./nginx/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - vay365
+
+volumes:
+  mysql-data:
+  redis-data:
+  certbot-data:
+
+networks:
+  vay365:
+    driver: bridge

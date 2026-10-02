@@ -1,0 +1,44 @@
+# Multi-stage build for Next.js web app
+FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install dependencies
+FROM base AS deps
+COPY package.json package-lock.json* ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/shared/package.json ./packages/shared/
+RUN npm ci
+
+# Build shared package
+FROM deps AS build-shared
+COPY packages/shared ./packages/shared
+RUN cd packages/shared && npx prisma generate && npm run build
+
+# Build web app
+FROM deps AS build-web
+COPY --from=build-shared /packages/shared/dist ./packages/shared/dist
+COPY --from=build-shared /packages/shared/node_modules ./packages/shared/node_modules
+COPY --from=build-shared /packages/shared/prisma ./packages/shared/prisma
+COPY apps/web ./apps/web
+COPY turbo.json ./
+RUN cd apps/web && npx next build
+
+# Production image
+FROM base AS runner
+ENV NODE_ENV=production
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=build-web /app/apps/web/.next/standalone ./
+COPY --from=build-web /app/apps/web/.next/static ./.next/static
+COPY --from=build-web /app/apps/web/public ./public
+
+RUN chown -R nextjs:nodejs /app
+USER nextjs
+
+EXPOSE 3000
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "apps/web/server.js"]
