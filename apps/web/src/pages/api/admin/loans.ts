@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const loans = await prisma.loan.findMany({
       where: actor.role === 'admin' ? {} : { assignedAgentId: actor.id },
       include: {
-        user: { select: { id: true, name: true, phone: true, email: true, profile: { include: { kycs: { orderBy: { createdAt: 'desc' }, take: 1 }, bankAccounts: true } } } },
+        user: { select: { id: true, name: true, phone: true, email: true, lockedUntil: true, profile: { select: { withdrawViolation: true, fullName: true, citizenId: true, monthlyIncome: true, jobTitle: true, kycs: { orderBy: { createdAt: 'desc' }, take: 1 }, bankAccounts: true } } } },
         assignedAgent: { select: { id: true, name: true, phone: true } },
         contracts: true,
       },
@@ -22,10 +22,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
 
   if (req.method === 'PATCH') {
-    const { loanId, status, assignedAgentId, rejectionReason } = req.body || {};
+    const { loanId, status, assignedAgentId, rejectionReason, withdrawViolation, locked } = req.body || {};
     if (!loanId) return res.status(400).json({ ok: false, error: 'Thiếu loanId' });
 
-    const existing = await prisma.loan.findUnique({ where: { id: loanId } });
+    const existing = await prisma.loan.findUnique({ where: { id: loanId }, select: { id: true, userId: true, assignedAgentId: true } });
     if (!existing) return res.status(404).json({ ok: false, error: 'Không tìm thấy hồ sơ vay' });
     if (actor.role !== 'admin' && existing.assignedAgentId !== actor.id) return res.status(403).json({ ok: false, error: 'Forbidden' });
 
@@ -44,12 +44,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       include: { user: { select: { id: true, name: true, phone: true } }, assignedAgent: { select: { id: true, name: true, phone: true } } },
     });
 
+    // Admin-only: cập nhật tài khoản KH từ trang hồ sơ vay
+    if (actor.role === 'admin') {
+      if (withdrawViolation !== undefined) {
+        await prisma.customerProfile.upsert({
+          where: { userId: existing.userId },
+          update: { withdrawViolation: Boolean(withdrawViolation) },
+          create: { userId: existing.userId, withdrawViolation: Boolean(withdrawViolation) },
+        });
+      }
+      if (locked !== undefined) {
+        await prisma.user.update({
+          where: { id: existing.userId },
+          data: { lockedUntil: locked ? new Date('9999-12-31T23:59:59.000Z') : null },
+        });
+      }
+    }
+
     await prisma.notification.create({
       data: { userId: loan.userId, type: 'loan', title: 'Hồ sơ vay cập nhật', body: `Trạng thái mới: ${loan.status}`, metadata: { loanId: loan.id } },
     });
     await writeActivity(req, { userId: actor.id, action: 'loan.update', resource: 'loan', resourceId: loan.id, metadata: data });
 
-    return res.status(200).json({ ok: true, data: loan });
+    // Trả về loan kèm user.profile để client cập nhật UI không cần reload
+    const refreshed = await prisma.loan.findUnique({
+      where: { id: loan.id },
+      include: {
+        user: { select: { id: true, name: true, phone: true, lockedUntil: true, profile: { select: { withdrawViolation: true, fullName: true, citizenId: true, monthlyIncome: true, jobTitle: true } } } },
+        assignedAgent: { select: { id: true, name: true, phone: true } },
+        contracts: true,
+      },
+    });
+    return res.status(200).json({ ok: true, data: refreshed });
   }
 
   res.setHeader('Allow', ['GET', 'PATCH']);

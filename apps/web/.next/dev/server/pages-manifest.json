@@ -2,12 +2,9 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
+  "/login": "pages/login.js",
+  "/dashboard": "pages/dashboard.js",
   "/admin": "pages/admin.js",
   "/api/admin/customers": "pages/api/admin/customers.js",
-  "/dashboard": "pages/dashboard.js",
-  "/loan-success": "pages/loan-success.js",
-  "/api/loans": "pages/api/loans.js",
-  "/profile": "pages/profile.js",
-  "/login": "pages/login.js",
-  "/api/auth/login": "pages/api/auth/login.js"
+  "/api/admin/loans": "pages/api/admin/loans.js"
 }

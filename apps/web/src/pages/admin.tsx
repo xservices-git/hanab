@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/jwt';
-import { Activity, Banknote, Bell, Briefcase, Building2, CheckCircle2, ChevronRight, ClipboardList, Clock3, CreditCard, Download, ExternalLink, Facebook, Headphones, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, Phone, Plus, Search, Send, ShieldCheck, UserRound, Users, X, XCircle } from 'lucide-react';
+import { Activity, AlertTriangle, Banknote, Bell, Briefcase, Building2, CheckCircle2, ChevronRight, ClipboardList, Clock3, CreditCard, Download, ExternalLink, Facebook, Headphones, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, Phone, Plus, Search, Send, ShieldCheck, UserRound, Users, X, XCircle } from 'lucide-react';
 import * as Recharts from 'recharts';
 import { useToast } from '@/components/ui/toast';
 
@@ -27,7 +27,7 @@ const nav = [
 export default function AdminPage({ user, agents, customers, loans, logs }: AdminProps) {
   const router = useRouter();
   const isAdmin = user?.role === 'admin';
-  const [tab, setTab] = useState<Tab>((router.query.tab as Tab) || 'overview');
+  const [tab, setTab] = useState<Tab>((router.query.tab as Tab) || 'customers');
   const [sidebar, setSidebar] = useState(false);
   const { showToast } = useToast();
   const [q, setQ] = useState('');
@@ -257,7 +257,20 @@ function LoanTable({ loans, agents, compact, isAdmin }: any) {
     if (!res.ok) return showToast((await res.json()).error || 'Cập nhật lỗi');
     reloadAdmin();
   }
-  return <Table><TableHeader><TableRow><TableHead>Mã</TableHead><TableHead>Khách</TableHead><TableHead>Khoản vay</TableHead><TableHead>Trạng thái</TableHead>{!compact && isAdmin && <TableHead>CS</TableHead>}<TableHead>Thao tác</TableHead></TableRow></TableHeader><TableBody>{loans.map((l: any) => <TableRow key={l.id}><TableCell className="font-mono text-xs font-bold text-slate-500">#{String(l.id).slice(0, 8)}</TableCell><TableCell><Person name={l.user?.name || l.user?.phone || '-'} sub={l.user?.phone || l.user?.profile?.citizenId || '-'} /></TableCell><TableCell><b>{money(l.amount)}</b><div className="text-xs text-slate-500">{l.termMonths} tháng</div></TableCell><TableCell><Status status={l.status} /></TableCell>{!compact && isAdmin && <TableCell><select disabled={busy === l.id} value={l.assignedAgentId || ''} onChange={(e) => update(l.id, { assignedAgentId: e.target.value })} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="">Chưa gán</option>{agents.map((a: any) => <option key={a.id} value={a.id}>{a.name || a.phone}</option>)}</select></TableCell>}<TableCell><div className="flex gap-2"><Button size="sm" disabled={busy === l.id} onClick={() => update(l.id, { status: 'approved' })}><CheckCircle2 size={14} /> Duyệt</Button><Button size="sm" variant="outline" disabled={busy === l.id} onClick={() => update(l.id, { status: 'rejected', rejectionReason: 'Từ chối bởi admin' })}><XCircle size={14} /> Từ chối</Button></div></TableCell></TableRow>)}</TableBody></Table>;
+  return <Table><TableHeader><TableRow><TableHead>Mã</TableHead><TableHead>Khách</TableHead><TableHead>Khoản vay</TableHead><TableHead className="text-right">Trạng thái</TableHead>{!compact && isAdmin && <TableHead>CS</TableHead>}<TableHead>Thao tác</TableHead></TableRow></TableHeader><TableBody>{loans.map((l: any) => {
+    const wv = Boolean(l.user?.profile?.withdrawViolation);
+    return <TableRow key={l.id}>
+      <TableCell className="font-mono text-xs font-bold text-slate-500">#{String(l.id).slice(0, 8)}</TableCell>
+      <TableCell><Person name={l.user?.name || l.user?.phone || '-'} sub={l.user?.phone || l.user?.profile?.citizenId || '-'} /></TableCell>
+      <TableCell><b>{money(l.amount)}</b><div className="text-xs text-slate-500">{l.termMonths} tháng</div></TableCell>
+      <TableCell><LoanStatusBadge loan={l} /></TableCell>
+      {!compact && isAdmin && <TableCell><select disabled={busy === l.id} value={l.assignedAgentId || ''} onChange={(e) => update(l.id, { assignedAgentId: e.target.value })} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="">Chưa gán</option>{agents.map((a: any) => <option key={a.id} value={a.id}>{a.name || a.phone}</option>)}</select></TableCell>}
+      <TableCell><div className="flex flex-wrap justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+        {isAdmin && <Button size="sm" variant={wv ? 'destructive' : 'outline'} disabled={busy === l.id} onClick={() => update(l.id, { withdrawViolation: !wv })}><AlertTriangle size={14} />{wv ? 'Bỏ rút tiền vi phạm' : 'Rút tiền vi phạm'}</Button>}
+        {!wv && <><Button size="sm" disabled={busy === l.id} onClick={() => update(l.id, { status: 'approved' })}><CheckCircle2 size={14} /> Duyệt</Button><Button size="sm" variant="outline" disabled={busy === l.id} onClick={() => update(l.id, { status: 'rejected', rejectionReason: 'Từ chối bởi admin' })}><XCircle size={14} /> Từ chối</Button></>}
+      </div></TableCell>
+    </TableRow>;
+  })}</TableBody></Table>;
 }
 
 function Customer({ c, onViewContract, onOpenLoan, onToggleAccount, onToggleWithdrawViolation, onEdit }: any) {
@@ -685,7 +698,30 @@ function Person({ name, sub }: any) { return <div className="flex min-w-0 items-
 function Tile({ label, value }: any) { return <div className="rounded-2xl bg-slate-50 p-3"><div className="text-xs font-bold uppercase text-slate-400">{label}</div><div className="mt-1 truncate font-bold">{value}</div></div>; }
 function Health({ label, value }: any) { return <div className="flex items-center justify-between rounded-2xl bg-slate-50 p-4"><span className="text-sm text-slate-500">{label}</span><b>{value}</b></div>; }
 function Empty({ text }: any) { return <div className="p-8 text-center text-sm text-slate-500">{text}</div>; }
-function AccountStatus({ account }: any) { return isLocked(account) ? <Badge className="border-red-200 bg-red-600 text-white shadow-sm">Đã khóa</Badge> : <Badge variant="success">Hoạt động</Badge>; }
+function AccountStatus({ account }: any) {
+  const locked = isLocked(account);
+  const wv = isWithdrawViolation(account);
+  if (locked && wv) {
+    return <div className="flex flex-col items-end gap-1"><Badge className="border-red-200 bg-red-600 text-white shadow-sm">Khóa tài khoản</Badge><Badge className="border-orange-200 bg-orange-500 text-white shadow-sm">Rút tiền vi phạm</Badge></div>;
+  }
+  if (locked) return <Badge className="border-red-200 bg-red-600 text-white shadow-sm">Khóa tài khoản</Badge>;
+  if (wv) return <Badge className="border-orange-200 bg-orange-500 text-white shadow-sm">Rút tiền vi phạm</Badge>;
+  return <Badge variant="success">Hoạt động</Badge>;
+}
+function LoanStatusBadge({ loan }: any) {
+  const status = loan?.status;
+  const loanBadge = <Status status={status} />;
+  const locked = isLocked(loan?.user);
+  const wv = Boolean(loan?.user?.profile?.withdrawViolation);
+  if (!locked && !wv) return <div className="flex justify-end">{loanBadge}</div>;
+  return (
+    <div className="flex flex-col items-end gap-1">
+      {loanBadge}
+      {locked && <Badge className="border-red-200 bg-red-600 text-white shadow-sm">Khóa tài khoản</Badge>}
+      {wv && <Badge className="border-orange-200 bg-orange-500 text-white shadow-sm">Rút tiền vi phạm</Badge>}
+    </div>
+  );
+}
 function isLocked(account: any) { return account?.lockedUntil ? new Date(account.lockedUntil).getTime() > Date.now() : false; }
 function isWithdrawViolation(account: any) { return Boolean(account?.profile?.withdrawViolation); }
 function accountLabel(account: any) { return isLocked(account) ? 'đã khóa locked' : 'hoạt động active'; }
@@ -712,7 +748,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   const customerWhere = isAdmin ? { role: 'user' as const } : { role: 'user' as const, loans: { some: { assignedAgentId: user.id } } };
   const [agents, customers, loans, logs] = await Promise.all([
     prisma.user.findMany({ where: { role: 'agent' }, select: { id: true, name: true, phone: true, email: true, telegramLink: true, lockedUntil: true, lastLoginAt: true, createdAt: true }, orderBy: { createdAt: 'desc' } }),
-    prisma.user.findMany({ where: customerWhere, select: { id: true, name: true, phone: true, email: true, telegramLink: true, createdAt: true, profile: { include: { kycs: { orderBy: { createdAt: 'desc' } }, bankAccounts: { orderBy: { createdAt: 'desc' } } } }, loans: { where: loanWhere, include: { contracts: true }, orderBy: { createdAt: 'desc' } } }, orderBy: { createdAt: 'desc' }, take: 300 }),
+    prisma.user.findMany({ where: customerWhere, select: { id: true, name: true, phone: true, email: true, telegramLink: true, lockedUntil: true, lastLoginAt: true, createdAt: true, profile: { include: { kycs: { orderBy: { createdAt: 'desc' } }, bankAccounts: { orderBy: { createdAt: 'desc' } } } }, loans: { where: loanWhere, include: { contracts: true }, orderBy: { createdAt: 'desc' } } }, orderBy: { createdAt: 'desc' }, take: 300 }),
     prisma.loan.findMany({
       where: loanWhere,
       include: {
@@ -722,7 +758,8 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
             name: true,
             phone: true,
             email: true,
-            profile: { include: { kycs: { orderBy: { createdAt: 'desc' } }, bankAccounts: { orderBy: { createdAt: 'desc' } } } },
+            lockedUntil: true,
+            profile: { select: { withdrawViolation: true, fullName: true, citizenId: true, monthlyIncome: true, jobTitle: true, kycs: { orderBy: { createdAt: 'desc' } }, bankAccounts: { orderBy: { createdAt: 'desc' } } } },
           },
         },
         assignedAgent: { select: { id: true, name: true, phone: true } },
