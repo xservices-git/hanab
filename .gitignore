@@ -1,12 +1,10 @@
 node_modules/
 dist/
-.next/
 .env.local
 .env.production
 *.log
 .DS_Store
 # env/secrets
-.env.*
 !.env.example
 # build/cache
 .turbo/
