@@ -12,6 +12,7 @@ export default function ConfirmLoanPage() {
   const [contract, setContract] = useState(false);
   const [signed, setSigned] = useState(false);
   const [signature, setSignature] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
 
@@ -75,20 +76,26 @@ export default function ConfirmLoanPage() {
   };
 
   const finish = async () => {
+    if (submitting) return;
     if (!signed || !signature) return showToast('Vui lòng ký tay trước khi hoàn tất');
-    const amount = Number(window.localStorage.getItem('loanAmount') || 10000000);
-    const termMonths = Number(window.localStorage.getItem('loanTerm') || 60);
-    const res = await fetch('/api/loans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount, termMonths, interestRate: 1, profile: readJson('loanProfile'), bank: readJson('loanBank'), kyc: readJson('loanKyc'), signatureImage: signature }),
-    });
-    const json = await res.json();
-    if (!json.ok) return showToast(json.error || 'Không thể gửi hồ sơ vay');
-    window.localStorage.setItem('loanSubmitted', '1');
-    window.localStorage.setItem('latestLoanId', json.data.id);
-    if (json.data.assignedAgent?.telegramLink) window.localStorage.setItem('assignedSaleTelegram', json.data.assignedAgent.telegramLink);
-    router.push('/loan-success');
+    setSubmitting(true);
+    try {
+      const amount = Number(window.localStorage.getItem('loanAmount') || 10000000);
+      const termMonths = Number(window.localStorage.getItem('loanTerm') || 60);
+      const res = await fetch('/api/loans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, termMonths, interestRate: 1, profile: readJson('loanProfile'), bank: readJson('loanBank'), kyc: readJson('loanKyc'), signatureImage: signature }),
+      });
+      const json = await res.json();
+      if (!json.ok) return showToast(json.error || 'Không thể gửi hồ sơ vay');
+      window.localStorage.setItem('loanSubmitted', '1');
+      window.localStorage.setItem('latestLoanId', json.data.id);
+      if (json.data.assignedAgent?.telegramLink) window.localStorage.setItem('assignedSaleTelegram', json.data.assignedAgent.telegramLink);
+      router.push('/loan-success');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -139,8 +146,8 @@ export default function ConfirmLoanPage() {
           </div>
 
           <div className="mt-8 flex justify-center">
-            <button onClick={finish} className="flex h-[46px] w-[190px] items-center justify-center rounded-full bg-[#2AAD69] font-bold text-white shadow-[0_10px_22px_rgba(20,30,210,0.25)] transition active:scale-95">
-              Hoàn tất ký hợp đồng
+            <button disabled={submitting} onClick={finish} className="flex h-[46px] w-[190px] items-center justify-center rounded-full bg-[#2AAD69] font-bold text-white shadow-[0_10px_22px_rgba(20,30,210,0.25)] transition active:scale-95 disabled:opacity-60">
+              {submitting ? 'Đang gửi...' : 'Hoàn tất ký hợp đồng'}
             </button>
           </div>
         </section>

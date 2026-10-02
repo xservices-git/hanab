@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { KycStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/jwt';
 import { ApiResponse } from '@vay365/shared';
@@ -50,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       } : null;
 
       const bankData = (profileRecord: any) => profileRecord && bank?.account && bank?.owner && bank?.bank ? {
-        customerProfileId: profileRecord.id,
+        customerProfileId: profileRecord.id as string,
         bankName: bank.bank,
         accountNumber: bank.account,
         accountName: bank.owner,
@@ -58,8 +59,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       } : null;
 
       const kycData = (profileRecord: any) => profileRecord && kyc ? {
-        customerProfileId: profileRecord.id,
-        status: 'submitted',
+        customerProfileId: profileRecord.id as string,
+        status: KycStatus.submitted,
         frontIdUrl: safeKycImage(kyc.front),
         backIdUrl: safeKycImage(kyc.back),
         selfieUrl: safeKycImage(kyc.face),
@@ -70,6 +71,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
       // Use transaction to keep a single DB connection alive
       const loan = await prisma.$transaction(async (tx) => {
+        // Re-check inside transaction to prevent race-condition duplicates
+        const dup = await tx.loan.findFirst({ where: { userId: payload.id as string }, select: { id: true } });
+        if (dup) throw new Error('DUPLICATE_LOAN');
+
         const profileRecord = profileData
           ? await tx.customerProfile.upsert({
               where: { userId: payload.id as string },
@@ -82,12 +87,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           await tx.user.update({ where: { id: payload.id as string }, data: { name: profile.name } });
         }
 
+        const profileId = profileRecord?.id as string | undefined;
+
         if (bankData(profileRecord)) {
-          await tx.bankAccount.create({ data: bankData(profileRecord)! });
+          const existingBank = await tx.bankAccount.findFirst({ where: { customerProfileId: profileId } });
+          if (existingBank) {
+            await tx.bankAccount.update({ where: { id: existingBank.id }, data: bankData(profileRecord)! });
+          } else {
+            await tx.bankAccount.create({ data: bankData(profileRecord)! });
+          }
         }
 
         if (kycData(profileRecord)) {
-          await tx.kycProfile.create({ data: kycData(profileRecord)! });
+          const existingKyc = await tx.kycProfile.findFirst({ where: { customerProfileId: profileId } });
+          if (existingKyc) {
+            await tx.kycProfile.update({ where: { id: existingKyc.id }, data: kycData(profileRecord)! });
+          } else {
+            await tx.kycProfile.create({ data: kycData(profileRecord)! });
+          }
         }
 
         return tx.loan.create({
@@ -123,6 +140,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   } catch (error) {
     console.error('loans api error', error);
+    if (error instanceof Error && error.message === 'DUPLICATE_LOAN') {
+      return res.status(409).json({ ok: false, error: 'Bạn đã có hồ sơ vay' });
+    }
     return res.status(500).json({ ok: false, error: error instanceof Error ? error.message : 'Internal server error' });
   }
 }

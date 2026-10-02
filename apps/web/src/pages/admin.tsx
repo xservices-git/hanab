@@ -1,5 +1,5 @@
 import type { GetServerSideProps } from 'next';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -272,7 +272,7 @@ function Customer({ c, onViewContract, onOpenLoan, onToggleAccount, onToggleWith
     <TableCell>{date(latestLoan?.createdAt || c.createdAt)}</TableCell>
     <TableCell><Badge variant="secondary">{loans.length} hồ sơ</Badge>{latestLoan && <div className="mt-1 text-xs text-slate-500">{money(latestLoan.amount)} · {latestLoan.termMonths} tháng</div>}</TableCell>
     <TableCell><AccountStatus account={c} /></TableCell>
-    <TableCell className="text-right"><div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>{latestLoan ? <><Button size="sm" variant="outline" onClick={() => onViewContract({ customer: c, loan: latestLoan, contract: latestLoan.contracts?.[0] })}>Xem hợp đồng</Button><Button size="sm" onClick={() => onOpenLoan(latestLoan, c)}>Xem hồ sơ vay</Button></> : <span className="text-sm text-slate-400">Chưa có hợp đồng</span>}{onEdit && <Button size="sm" variant="outline" onClick={() => onEdit(c)}>Sửa</Button>}{onToggleWithdrawViolation && <Button size="sm" variant={isWithdrawViolation(c) ? 'destructive' : 'outline'} onClick={() => onToggleWithdrawViolation(c)}>{isWithdrawViolation(c) ? 'Bỏ rút tiền vi phạm' : 'Rút tiền vi phạm'}</Button>}{onToggleAccount && <Button size="sm" variant={isLocked(c) ? 'outline' : 'destructive'} onClick={() => onToggleAccount(c)}>{isLocked(c) ? 'Mở khóa' : 'Khóa'}</Button>}</div></TableCell>
+    <TableCell className="text-right"><div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>{latestLoan ? <><Button size="sm" variant="outline" onClick={() => onViewContract({ customer: c, loan: latestLoan, contract: latestLoan.contracts?.[0] })}>Xem hợp đồng</Button><Button size="sm" onClick={() => onOpenLoan(latestLoan, c)}>Xem hồ sơ vay</Button></> : <span className="text-sm text-slate-400">Chưa có hợp đồng</span>}{onToggleWithdrawViolation && <Button size="sm" variant={isWithdrawViolation(c) ? 'destructive' : 'outline'} onClick={() => onToggleWithdrawViolation(c)}>{isWithdrawViolation(c) ? 'Bỏ rút tiền vi phạm' : 'Rút tiền vi phạm'}</Button>}{onToggleAccount && <Button size="sm" variant={isLocked(c) ? 'outline' : 'destructive'} onClick={() => onToggleAccount(c)}>{isLocked(c) ? 'Mở khóa' : 'Khóa'}</Button>}</div></TableCell>
   </TableRow>;
 }
 
@@ -381,16 +381,8 @@ function EditCustomerPopup({ customer, onClose, onSaved }: { customer: any; onCl
     onSaved();
   }
 
-  const InputField = useCallback(({ label, name, form, setForm, ...rest }: any) => (
-    <label className="block">
-      <span className="mb-1 block text-xs font-bold text-slate-600">{label}</span>
-      <Input name={name} {...rest} value={form[name] ?? ''} onChange={(e: any) => setForm((s: any) => ({ ...s, [name]: e.target.value }))} />
-    </label>
-  ), []);
-
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
-      <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+  return (    <div onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4">
+      <div className="my-auto max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
           <div>
             <div className="text-xl font-black">Sửa khách hàng</div>
@@ -558,21 +550,14 @@ function ContractPopup({ data, isAdmin, onClose, onSaved }: any) {
     onSaved?.();
   }
 
-  const InputField = ({ label, name, ...rest }: any) => (
-    <label className="block">
-      <span className="mb-1 block text-xs font-bold text-slate-600">{label}</span>
-      <Input name={name} {...rest} value={(form as any)[name] ?? ''} onChange={(e: any) => set(name, e.target.value)} />
-    </label>
-  );
-
   const viewBox = (title: string, icon: any, rows: any[]) => (
     <InfoBox icon={icon} title={title} rows={rows} />
   );
 
   const editableFields: any = mode === 'edit';
 
-  return <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
-    <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+  return <div onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4">
+    <div className="my-auto max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
       <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-100 bg-white px-6 py-4">
         <div>
           <div className="text-xl font-black">{editableFields ? 'Sửa thông tin khách hàng' : 'Chi tiết hồ sơ khách hàng'}</div>
@@ -598,8 +583,8 @@ function ContractPopup({ data, isAdmin, onClose, onSaved }: any) {
                   <InputField form={form} setForm={setForm} label="Họ tên đầy đủ" name="fullName" />
                   <InputField form={form} setForm={setForm} label="CCCD/Hộ chiếu" name="citizenId" />
                   <InputField form={form} setForm={setForm} label="Ngày sinh" name="dateOfBirth" type="date" />
-                  <label className="block"><span className="mb-1 block text-xs font-bold text-slate-600">Giới tính</span>
-                    <select value={form.gender} onChange={(e) => set('gender', e.target.value)} className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm">
+                  <label className="block"><span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">Giới tính</span>
+                    <select defaultValue={form.gender || ''} onChange={(e) => set('gender', e.target.value)} className="h-11 w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm text-slate-800 shadow-sm transition-all duration-150 hover:border-slate-300 hover:shadow focus:border-blue-500 focus:bg-blue-50/30 focus:outline-none focus:ring-4 focus:ring-blue-500/15">
                       <option value="">--</option><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Khác">Khác</option>
                     </select>
                   </label>
@@ -750,4 +735,25 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   ]);
   return { props: { user: JSON.parse(JSON.stringify(user)), agents: JSON.parse(JSON.stringify(agents)), customers: JSON.parse(JSON.stringify(customers)), loans: JSON.parse(JSON.stringify(loans)), logs: JSON.parse(JSON.stringify(logs)) } };
 };
+
+function InputField({ label, name, form, setForm, ...rest }: any) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">{label}</span>
+      <input
+        autoComplete="off"
+        data-lpignore="true"
+        data-1p-ignore="true"
+        data-form-type="other"
+        spellCheck={false}
+        name={name}
+        defaultValue={form?.[name] ?? ''}
+        onInput={(e: any) => setForm((s: any) => ({ ...s, [name]: e.target.value }))}
+        placeholder={`Nhập ${label.toLowerCase()}...`}
+        className="h-11 w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm text-slate-800 placeholder:font-normal placeholder:text-slate-400 shadow-sm transition-all duration-150 hover:border-slate-300 hover:shadow focus:border-blue-500 focus:bg-blue-50/30 focus:outline-none focus:ring-4 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+        {...rest}
+      />
+    </label>
+  );
+}
 
