@@ -1,5 +1,5 @@
 import type { GetServerSideProps } from 'next';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -167,6 +167,7 @@ function Customers({ customers, isAdmin, page, onPage, onOpenLoan }: any) {
   const { showToast } = useToast();
   const reloadAdmin = () => router.replace(router.asPath, undefined, { scroll: false });
   const [contract, setContract] = useState<any>(null);
+  const [editing, setEditing] = useState<any>(null);
   async function toggleCustomer(c: any) {
     const locked = isLocked(c);
     const res = await fetch('/api/admin/customers', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerId: c.id, locked: !locked }) });
@@ -178,12 +179,13 @@ function Customers({ customers, isAdmin, page, onPage, onOpenLoan }: any) {
     <div className="overflow-x-auto">
       <Table className="min-w-[1080px]">
         <TableHeader><TableRow><TableHead>Khách hàng</TableHead><TableHead>CCCD</TableHead><TableHead>Thu nhập</TableHead><TableHead>Ngày</TableHead><TableHead>Hồ sơ</TableHead><TableHead>Trạng thái</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
-        <TableBody>{pager.items.map((c: any) => <Customer key={c.id} c={c} onViewContract={setContract} onOpenLoan={onOpenLoan} onToggleAccount={isAdmin ? toggleCustomer : undefined} />)}</TableBody>
+        <TableBody>{pager.items.map((c: any) => <Customer key={c.id} c={c} onViewContract={setContract} onOpenLoan={onOpenLoan} onToggleAccount={isAdmin ? toggleCustomer : undefined} onEdit={isAdmin ? setEditing : undefined} />)}</TableBody>
       </Table>
     </div>
     {!customers.length && <Empty text="Không có khách hàng" />}
     <Pagination page={pager.page} totalPages={pager.totalPages} total={customers.length} pageSize={12} onPage={onPage} />
-    {contract && <ContractPopup data={contract} onClose={() => setContract(null)} />}
+    {contract && <ContractPopup data={contract} isAdmin={isAdmin} onClose={() => setContract(null)} onSaved={() => { reloadAdmin(); }} />}
+    {editing && <EditCustomerPopup customer={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); reloadAdmin(); }} />}
   </DataCard>;
 }
 function Loans({ loans, agents, isAdmin, page, onPage }: any) { const pager = paginate(loans, page, 12); return <DataCard title="Hồ sơ vay"><LoanTable loans={pager.items} agents={agents} isAdmin={isAdmin} />{!loans.length && <Empty text="Không có hồ sơ" />}<Pagination page={pager.page} totalPages={pager.totalPages} total={loans.length} pageSize={12} onPage={onPage} /></DataCard>; }
@@ -252,19 +254,19 @@ function LoanTable({ loans, agents, compact, isAdmin }: any) {
   return <Table><TableHeader><TableRow><TableHead>Mã</TableHead><TableHead>Khách</TableHead><TableHead>Khoản vay</TableHead><TableHead>Trạng thái</TableHead>{!compact && isAdmin && <TableHead>CS</TableHead>}<TableHead>Thao tác</TableHead></TableRow></TableHeader><TableBody>{loans.map((l: any) => <TableRow key={l.id}><TableCell className="font-mono text-xs font-bold text-slate-500">#{String(l.id).slice(0, 8)}</TableCell><TableCell><Person name={l.user?.name || l.user?.phone || '-'} sub={l.user?.phone || l.user?.profile?.citizenId || '-'} /></TableCell><TableCell><b>{money(l.amount)}</b><div className="text-xs text-slate-500">{l.termMonths} tháng</div></TableCell><TableCell><Status status={l.status} /></TableCell>{!compact && isAdmin && <TableCell><select disabled={busy === l.id} value={l.assignedAgentId || ''} onChange={(e) => update(l.id, { assignedAgentId: e.target.value })} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="">Chưa gán</option>{agents.map((a: any) => <option key={a.id} value={a.id}>{a.name || a.phone}</option>)}</select></TableCell>}<TableCell><div className="flex gap-2"><Button size="sm" disabled={busy === l.id} onClick={() => update(l.id, { status: 'approved' })}><CheckCircle2 size={14} /> Duyệt</Button><Button size="sm" variant="outline" disabled={busy === l.id} onClick={() => update(l.id, { status: 'rejected', rejectionReason: 'Từ chối bởi admin' })}><XCircle size={14} /> Từ chối</Button></div></TableCell></TableRow>)}</TableBody></Table>;
 }
 
-function Customer({ c, onViewContract, onOpenLoan, onToggleAccount }: any) {
+function Customer({ c, onViewContract, onOpenLoan, onToggleAccount, onEdit }: any) {
   const p = c.profile;
   const loans = c.loans || [];
   const latestLoan = loans[0];
   const hasProfile = Boolean(p || loans.length);
-  return <TableRow>
+  return <TableRow className={onEdit ? 'cursor-pointer hover:bg-slate-50' : ''} onClick={() => onEdit && onEdit(c)}>
     <TableCell><Person name={c.name || p?.fullName || c.phone || '-'} sub={c.phone || c.email || p?.address || '-'} /></TableCell>
     <TableCell className="font-mono text-xs">{p?.citizenId || '-'}</TableCell>
     <TableCell>{money(p?.monthlyIncome || 0)}<div className="text-xs text-slate-500">{p?.jobTitle || 'Chưa cập nhật nghề'}</div></TableCell>
     <TableCell>{date(latestLoan?.createdAt || c.createdAt)}</TableCell>
     <TableCell><Badge variant="secondary">{loans.length} hồ sơ</Badge>{latestLoan && <div className="mt-1 text-xs text-slate-500">{money(latestLoan.amount)} · {latestLoan.termMonths} tháng</div>}</TableCell>
     <TableCell><AccountStatus account={c} /></TableCell>
-    <TableCell className="text-right"><div className="flex justify-end gap-2">{latestLoan ? <><Button size="sm" variant="outline" onClick={() => onViewContract({ customer: c, loan: latestLoan, contract: latestLoan.contracts?.[0] })}>Xem hợp đồng</Button><Button size="sm" onClick={() => onOpenLoan(latestLoan, c)}>Xem hồ sơ vay</Button></> : <span className="text-sm text-slate-400">Chưa có hợp đồng</span>}{onToggleAccount && <Button size="sm" variant={isLocked(c) ? 'outline' : 'destructive'} onClick={() => onToggleAccount(c)}>{isLocked(c) ? 'Mở khóa' : 'Khóa'}</Button>}</div></TableCell>
+    <TableCell className="text-right"><div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>{latestLoan ? <><Button size="sm" variant="outline" onClick={() => onViewContract({ customer: c, loan: latestLoan, contract: latestLoan.contracts?.[0] })}>Xem hợp đồng</Button><Button size="sm" onClick={() => onOpenLoan(latestLoan, c)}>Xem hồ sơ vay</Button></> : <span className="text-sm text-slate-400">Chưa có hợp đồng</span>}{onEdit && <Button size="sm" variant="outline" onClick={() => onEdit(c)}>Sửa</Button>}{onToggleAccount && <Button size="sm" variant={isLocked(c) ? 'outline' : 'destructive'} onClick={() => onToggleAccount(c)}>{isLocked(c) ? 'Mở khóa' : 'Khóa'}</Button>}</div></TableCell>
   </TableRow>;
 }
 
@@ -285,27 +287,364 @@ function BankMini({ profile }: any) {
   return <div className="text-sm"><div className="font-bold">{b.bankName}</div><div className="font-mono text-xs text-slate-500">{b.accountNumber}</div></div>;
 }
 
-function ContractPopup({ data, onClose }: any) {
+function EditCustomerPopup({ customer, onClose, onSaved }: { customer: any; onClose: () => void; onSaved: () => void }) {
+  const { showToast } = useToast();
+  const p = customer.profile || {};
+  const primaryBank = (p.bankAccounts || []).find((b: any) => b.isPrimary) || (p.bankAccounts || [])[0] || {};
+  const latestKyc = (p.kycs || [])[0] || {};
+  const [form, setForm] = useState({
+    name: customer.name || '',
+    phone: customer.phone || '',
+    email: customer.email || '',
+    telegramLink: customer.telegramLink || '',
+    password: '',
+    locked: isLocked(customer),
+    fullName: p.fullName || '',
+    citizenId: p.citizenId || '',
+    dateOfBirth: p.dateOfBirth ? new Date(p.dateOfBirth).toISOString().slice(0, 10) : '',
+    gender: p.gender || '',
+    address: p.address || '',
+    jobTitle: p.jobTitle || '',
+    employerName: p.employerName || '',
+    monthlyIncome: p.monthlyIncome ?? '',
+    emergencyName: p.emergencyName || '',
+    emergencyPhone: p.emergencyPhone || '',
+    emergencyRelation: p.emergencyRelation || '',
+    bankName: primaryBank.bankName || '',
+    accountNumber: primaryBank.accountNumber || '',
+    accountName: primaryBank.accountName || '',
+    kycStatus: latestKyc.status || 'pending',
+    kycRejectionReason: latestKyc.rejectionReason || '',
+  });
+  const [images, setImages] = useState<{ front?: string; back?: string; face?: string }>({
+    front: latestKyc.frontIdUrl || '',
+    back: latestKyc.backIdUrl || '',
+    face: latestKyc.selfieUrl || '',
+  });
+  const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<'info' | 'work' | 'bank' | 'kyc'>('info');
+
+  const set = (key: string, val: any) => setForm((s) => ({ ...s, [key]: val }));
+
+  async function fileToDataUrl(file: File): Promise<string> {
+    const bitmap = await createImageBitmap(file);
+    const maxSide = 1200;
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Không xử lý được ảnh');
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.72);
+  }
+
+  async function pickImage(key: 'front' | 'back' | 'face', file: File | null) {
+    if (!file) return;
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      setImages((s) => ({ ...s, [key]: dataUrl }));
+    } catch (e) {
+      showToast('Không đọc được ảnh');
+    }
+  }
+
+  async function save() {
+    setBusy(true);
+    const payload: any = {
+      customerId: customer.id,
+      ...form,
+      monthlyIncome: form.monthlyIncome === '' ? null : Number(form.monthlyIncome),
+      frontIdUrl: images.front || null,
+      backIdUrl: images.back || null,
+      selfieUrl: images.face || null,
+    };
+    // If no new images uploaded, keep existing by sending current values
+    if (!images.front) payload.frontIdUrl = latestKyc.frontIdUrl || null;
+    if (!images.back) payload.backIdUrl = latestKyc.backIdUrl || null;
+    if (!images.face) payload.selfieUrl = latestKyc.selfieUrl || null;
+    if (!payload.password) delete payload.password;
+    const res = await fetch('/api/admin/customers', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    setBusy(false);
+    if (!res.ok) return showToast((await res.json()).error || 'Không lưu được');
+    showToast('Đã lưu thay đổi');
+    onSaved();
+  }
+
+  const InputField = useCallback(({ label, name, form, setForm, ...rest }: any) => (
+    <label className="block">
+      <span className="mb-1 block text-xs font-bold text-slate-600">{label}</span>
+      <Input name={name} {...rest} value={form[name] ?? ''} onChange={(e: any) => setForm((s: any) => ({ ...s, [name]: e.target.value }))} />
+    </label>
+  ), []);
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
+      <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+          <div>
+            <div className="text-xl font-black">Sửa khách hàng</div>
+            <div className="text-xs text-slate-500">ID: <span className="font-mono">{customer.id}</span> · Tạo {date(customer.createdAt)}</div>
+          </div>
+          <div className="flex gap-2"><Button variant="outline" onClick={onClose} disabled={busy}>Đóng</Button><Button onClick={save} disabled={busy}>{busy ? 'Đang lưu...' : 'Lưu thay đổi'}</Button></div>
+        </div>
+        <div className="px-6 pt-4">
+          <div className="flex flex-wrap gap-2 border-b border-slate-100">
+            {([
+              ['info', 'Thông tin cá nhân'],
+              ['work', 'Công việc'],
+              ['bank', 'Ngân hàng'],
+              ['kyc', 'Ảnh KYC'],
+            ] as const).map(([id, label]) => (
+              <button key={id} onClick={() => setTab(id)} className={`rounded-t-xl px-4 py-2 text-sm font-bold transition ${tab === id ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>{label}</button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-4 p-6">
+          {tab === 'info' && (
+            <div className="grid gap-3 md:grid-cols-2">
+              <InputField form={form} setForm={setForm} label="Tên hiển thị" name="name" placeholder="Tên" />
+              <InputField form={form} setForm={setForm} label="Số điện thoại" name="phone" placeholder="SĐT" />
+              <InputField form={form} setForm={setForm} label="Email" name="email" placeholder="Email" />
+              <InputField form={form} setForm={setForm} label="Telegram" name="telegramLink" placeholder="https://t.me/..." />
+              <InputField form={form} setForm={setForm} label="Mật khẩu mới (bỏ trống nếu giữ)" name="password" type="password" placeholder="••••••" />
+              <label className="flex items-center gap-2 rounded-2xl border border-slate-200 p-3 text-sm font-bold">
+                <input type="checkbox" checked={form.locked} onChange={(e) => set('locked', e.target.checked)} />
+                Khoá tài khoản
+              </label>
+              <hr className="md:col-span-2 border-slate-100" />
+              <InputField form={form} setForm={setForm} label="Họ tên đầy đủ" name="fullName" placeholder="Nguyễn Văn A" />
+              <InputField form={form} setForm={setForm} label="CCCD/Hộ chiếu" name="citizenId" placeholder="0123456789" />
+              <InputField form={form} setForm={setForm} label="Ngày sinh" name="dateOfBirth" type="date" />
+              <label className="block">
+                <span className="mb-1 block text-xs font-bold text-slate-600">Giới tính</span>
+                <select value={form.gender} onChange={(e) => set('gender', e.target.value)} className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm">
+                  <option value="">--</option>
+                  <option value="Nam">Nam</option>
+                  <option value="Nữ">Nữ</option>
+                  <option value="Khác">Khác</option>
+                </select>
+              </label>
+              <InputField form={form} setForm={setForm} label="Địa chỉ" name="address" placeholder="Địa chỉ thường trú" />
+              <hr className="md:col-span-2 border-slate-100" />
+              <InputField form={form} setForm={setForm} label="Tên người thân" name="emergencyName" placeholder="Họ tên" />
+              <InputField form={form} setForm={setForm} label="SĐT người thân" name="emergencyPhone" placeholder="SĐT" />
+              <InputField form={form} setForm={setForm} label="Quan hệ" name="emergencyRelation" placeholder="Cha/Mẹ/Vợ/Chồng..." />
+            </div>
+          )}
+          {tab === 'work' && (
+            <div className="grid gap-3 md:grid-cols-2">
+              <InputField form={form} setForm={setForm} label="Nghề nghiệp" name="jobTitle" placeholder="Nghề nghiệp" />
+              <InputField form={form} setForm={setForm} label="Nơi làm việc" name="employerName" placeholder="Công ty" />
+              <InputField form={form} setForm={setForm} label="Thu nhập tháng (KRW)" name="monthlyIncome" type="number" placeholder="0" />
+            </div>
+          )}
+          {tab === 'bank' && (
+            <div className="grid gap-3 md:grid-cols-2">
+              <InputField form={form} setForm={setForm} label="Ngân hàng" name="bankName" placeholder="Vietcombank, KB..." />
+              <InputField form={form} setForm={setForm} label="Số tài khoản" name="accountNumber" placeholder="0123456789" />
+              <InputField form={form} setForm={setForm} label="Tên chủ TK" name="accountName" placeholder="NGUYEN VAN A" />
+            </div>
+          )}
+          {tab === 'kyc' && (
+            <div className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-3">
+                <label className="block">
+                  <span className="mb-1 block text-xs font-bold text-slate-600">Trạng thái KYC</span>
+                  <select value={form.kycStatus} onChange={(e) => set('kycStatus', e.target.value)} className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm">
+                    <option value="pending">Chờ upload</option>
+                    <option value="submitted">Đã gửi</option>
+                    <option value="verified">Đã duyệt</option>
+                    <option value="rejected">Từ chối</option>
+                  </select>
+                </label>
+                <div className="md:col-span-2">
+                  <InputField form={form} setForm={setForm} label="Lý do từ chối (nếu có)" name="kycRejectionReason" placeholder="Lý do" />
+                </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                {([
+                  ['front', 'CCCD mặt trước'],
+                  ['back', 'CCCD mặt sau'],
+                  ['face', 'Selfie'],
+                ] as const).map(([key, label]) => (
+                  <div key={key} className="rounded-2xl border border-slate-200 p-3">
+                    <div className="mb-2 text-sm font-bold text-slate-600">{label}</div>
+                    {images[key] ? (
+                      <img src={images[key]} alt={label} className="h-32 w-full rounded-xl object-cover" />
+                    ) : (
+                      <div className="grid h-32 place-items-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-400">Chưa có ảnh</div>
+                    )}
+                    <label className="mt-2 inline-flex h-9 w-full cursor-pointer items-center justify-center rounded-xl bg-blue-600 text-xs font-bold text-white hover:bg-blue-700">
+                      Tải ảnh mới
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => pickImage(key, e.target.files?.[0] || null)} />
+                    </label>
+                    {images[key] && (
+                      <button type="button" onClick={() => setImages((s) => ({ ...s, [key]: '' }))} className="mt-2 inline-flex h-9 w-full items-center justify-center rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                        Xoá ảnh
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-xl bg-amber-50 p-3 text-xs text-amber-700">Bỏ trống nếu giữ ảnh cũ. Chọn ảnh mới = thay thế ảnh hiện tại.</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ContractPopup({ data, isAdmin, onClose, onSaved }: any) {
+  const { showToast } = useToast();
   const c = data.customer;
-  const p = c.profile;
+  const p = c.profile || {};
   const l = data.loan;
   const contract = data.contract;
   const kyc = p?.kycs?.[0];
   const bank = p?.bankAccounts?.find((b: any) => b.isPrimary) || p?.bankAccounts?.[0];
+
+  const [mode, setMode] = useState<'view' | 'edit'>('view');
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({
+    name: c.name || '',
+    phone: c.phone || '',
+    email: c.email || '',
+    telegramLink: c.telegramLink || '',
+    fullName: p.fullName || '',
+    citizenId: p.citizenId || '',
+    dateOfBirth: p.dateOfBirth ? new Date(p.dateOfBirth).toISOString().slice(0, 10) : '',
+    gender: p.gender || '',
+    address: p.address || '',
+    emergencyName: p.emergencyName || '',
+    emergencyPhone: p.emergencyPhone || '',
+    emergencyRelation: p.emergencyRelation || '',
+    jobTitle: p.jobTitle || '',
+    employerName: p.employerName || '',
+    monthlyIncome: p.monthlyIncome ?? '',
+    bankName: bank?.bankName || '',
+    accountNumber: bank?.accountNumber || '',
+    accountName: bank?.accountName || '',
+  });
+  const set = (key: string, val: any) => setForm((s) => ({ ...s, [key]: val }));
+
+  async function save() {
+    setBusy(true);
+    const payload: any = {
+      customerId: c.id,
+      ...form,
+      monthlyIncome: form.monthlyIncome === '' ? null : Number(form.monthlyIncome),
+    };
+    const res = await fetch('/api/admin/customers', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    setBusy(false);
+    if (!res.ok) return showToast((await res.json()).error || 'Không lưu được');
+    showToast('Đã lưu thay đổi');
+    setMode('view');
+    onSaved?.();
+  }
+
+  const InputField = useCallback(({ label, name, ...rest }: any) => (
+    <label className="block">
+      <span className="mb-1 block text-xs font-bold text-slate-600">{label}</span>
+      <Input name={name} {...rest} value={(form as any)[name] ?? ''} onChange={(e: any) => set(name, e.target.value)} />
+    </label>
+  ), [form]);
+
+  const viewBox = (title: string, icon: any, rows: any[]) => (
+    <InfoBox icon={icon} title={title} rows={rows} />
+  );
+
+  const editableFields: any = mode === 'edit';
+
   return <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
-    <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
-      <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4"><div><div className="text-xl font-black">Chi tiết hồ sơ khách hàng</div><div className="text-sm text-slate-500">Mã hồ sơ vay #{String(l.id).slice(0, 8)}</div></div><Button variant="outline" onClick={onClose}>Đóng</Button></div>
+    <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-slate-100 bg-white px-6 py-4">
+        <div>
+          <div className="text-xl font-black">{editableFields ? 'Sửa thông tin khách hàng' : 'Chi tiết hồ sơ khách hàng'}</div>
+          <div className="text-sm text-slate-500">Mã hồ sơ vay #{String(l.id).slice(0, 8)}</div>
+        </div>
+        <div className="flex gap-2">
+          {!editableFields && isAdmin && <Button variant="outline" onClick={() => setMode('edit')}>Sửa thông tin</Button>}
+          {editableFields && <><Button variant="outline" disabled={busy} onClick={() => setMode('view')}>Huỷ</Button><Button disabled={busy} onClick={save}>{busy ? 'Đang lưu...' : 'Lưu thay đổi'}</Button></>}
+          <Button variant="outline" onClick={onClose}>Đóng</Button>
+        </div>
+      </div>
       <div className="space-y-3 p-4">
         <div className="grid gap-3 md:grid-cols-2">
           <div className="space-y-3">
-            <InfoBox icon={UserRound} title="Thông tin khách hàng" rows={[["Họ tên", c.name || p?.fullName || '-'], ["SĐT", c.phone || '-'], ["Email", c.email || '-'], ["CCCD", p?.citizenId || '-'], ["Ngày sinh", date(p?.dateOfBirth)], ["Giới tính", p?.gender || '-'], ["Địa chỉ thường trú", p?.address || '-'], ["Tên người thân", p?.emergencyName || '-'], ["Số điện thoại người thân", p?.emergencyPhone || '-'], ["Quan hệ", p?.emergencyRelation || '-']]} />
+            {editableFields ? (
+              <div className="rounded-2xl border border-slate-200 p-3">
+                <div className="mb-2 flex items-center gap-2 font-black"><UserRound size={17} className="text-blue-600" />Thông tin khách hàng</div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <InputField form={form} setForm={setForm} label="Tên hiển thị" name="name" />
+                  <InputField form={form} setForm={setForm} label="SĐT" name="phone" />
+                  <InputField form={form} setForm={setForm} label="Email" name="email" type="email" />
+                  <InputField form={form} setForm={setForm} label="Telegram" name="telegramLink" />
+                  <InputField form={form} setForm={setForm} label="Họ tên đầy đủ" name="fullName" />
+                  <InputField form={form} setForm={setForm} label="CCCD/Hộ chiếu" name="citizenId" />
+                  <InputField form={form} setForm={setForm} label="Ngày sinh" name="dateOfBirth" type="date" />
+                  <label className="block"><span className="mb-1 block text-xs font-bold text-slate-600">Giới tính</span>
+                    <select value={form.gender} onChange={(e) => set('gender', e.target.value)} className="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm">
+                      <option value="">--</option><option value="Nam">Nam</option><option value="Nữ">Nữ</option><option value="Khác">Khác</option>
+                    </select>
+                  </label>
+                  <div className="md:col-span-2"><InputField form={form} setForm={setForm} label="Địa chỉ" name="address" /></div>
+                  <InputField form={form} setForm={setForm} label="Tên người thân" name="emergencyName" />
+                  <InputField form={form} setForm={setForm} label="SĐT người thân" name="emergencyPhone" />
+                  <InputField form={form} setForm={setForm} label="Quan hệ" name="emergencyRelation" />
+                </div>
+              </div>
+            ) : viewBox("Thông tin khách hàng", UserRound, [
+              ["Họ tên", c.name || p?.fullName || '-'],
+              ["SĐT", c.phone || '-'],
+              ["Email", c.email || '-'],
+              ["CCCD", p?.citizenId || '-'],
+              ["Ngày sinh", date(p?.dateOfBirth)],
+              ["Giới tính", p?.gender || '-'],
+              ["Địa chỉ thường trú", p?.address || '-'],
+              ["Tên người thân", p?.emergencyName || '-'],
+              ["Số điện thoại người thân", p?.emergencyPhone || '-'],
+              ["Quan hệ", p?.emergencyRelation || '-'],
+            ])}
             <InfoBox icon={CreditCard} title="Thông tin khoản vay" rows={[["Số tiền vay", money(l.amount)], ["Kỳ hạn", `${l.termMonths || 0} tháng`], ["Lãi suất", `${l.interestRate || 0}%`], ["Trạng thái hồ sơ", loanLabel(l.status)], ["Ngày tạo", date(l.createdAt)], ["Ghi chú", l.notes || '-']]} />
             <SignatureBox customerName={c.name || p?.fullName || '-'} signatureImage={contract?.signatureImage} signedAt={contract?.signedAt} loanId={l.id} />
           </div>
           <div className="space-y-3">
-            <InfoBox icon={Activity} title="Công việc & thu nhập" rows={[["Nghề nghiệp", p?.jobTitle || '-'], ["Nơi làm việc", p?.employerName || '-'], ["Thu nhập tháng", money(p?.monthlyIncome || 0)]]} />
-            <InfoBox icon={ClipboardList} title="Thông tin hợp đồng" rows={[["Mã hợp đồng", contract?.id ? `#${String(contract.id).slice(0, 8)}` : 'Chưa phát hành'], ["Trạng thái", contractLabel(contract?.status)], ["Ngày ký", date(contract?.signedAt)], ["IP ký", contract?.signatureIp || '-'], ["File", contract?.fileUrl || '-']]} />
-            <InfoBox icon={ShieldCheck} title="Tài khoản nhận giải ngân" rows={[["Ngân hàng", bank?.bankName || '-'], ["Số tài khoản", bank?.accountNumber || '-'], ["Tên chủ tài khoản", bank?.accountName || '-']]} />
+            {editableFields ? (
+              <>
+                <div className="rounded-2xl border border-slate-200 p-3">
+                  <div className="mb-2 flex items-center gap-2 font-black"><Activity size={17} className="text-blue-600" />Công việc & thu nhập</div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <InputField form={form} setForm={setForm} label="Nghề nghiệp" name="jobTitle" />
+                    <InputField form={form} setForm={setForm} label="Nơi làm việc" name="employerName" />
+                    <InputField form={form} setForm={setForm} label="Thu nhập tháng (KRW)" name="monthlyIncome" type="number" />
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-slate-200 p-3">
+                  <div className="mb-2 flex items-center gap-2 font-black"><ShieldCheck size={17} className="text-blue-600" />Tài khoản nhận giải ngân</div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <InputField form={form} setForm={setForm} label="Ngân hàng" name="bankName" />
+                    <InputField form={form} setForm={setForm} label="Số tài khoản" name="accountNumber" />
+                    <div className="md:col-span-2"><InputField form={form} setForm={setForm} label="Tên chủ tài khoản" name="accountName" /></div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <InfoBox icon={Activity} title="Công việc & thu nhập" rows={[["Nghề nghiệp", p?.jobTitle || '-'], ["Nơi làm việc", p?.employerName || '-'], ["Thu nhập tháng", money(p?.monthlyIncome || 0)]]} />
+                <InfoBox icon={ClipboardList} title="Thông tin hợp đồng" rows={[["Mã hợp đồng", contract?.id ? `#${String(contract.id).slice(0, 8)}` : 'Chưa phát hành'], ["Trạng thái", contractLabel(contract?.status)], ["Ngày ký", date(contract?.signedAt)], ["IP ký", contract?.signatureIp || '-'], ["File", contract?.fileUrl || '-']]} />
+                <InfoBox icon={ShieldCheck} title="Tài khoản nhận giải ngân" rows={[["Ngân hàng", bank?.bankName || '-'], ["Số tài khoản", bank?.accountNumber || '-'], ["Tên chủ tài khoản", bank?.accountName || '-']]} />
+              </>
+            )}
           </div>
         </div>
         <KycImages kyc={kyc} />

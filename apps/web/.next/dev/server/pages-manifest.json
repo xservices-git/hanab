@@ -2,9 +2,10 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
   "/signup": "pages/signup.js",
-  "/admin": "pages/admin.js",
-  "/api/auth/register": "pages/api/auth/register.js",
+  "/confirm-loan": "pages/confirm-loan.js",
+  "/api/loans": "pages/api/loans.js",
+  "/bank-info": "pages/bank-info.js",
+  "/kyc": "pages/kyc.js",
   "/dashboard": "pages/dashboard.js"
 }
