@@ -4,8 +4,8 @@
   ],
   "devFiles": [],
   "lowPriorityFiles": [
-    "static/qRmVCuugGcHJZkB7aTtYb/_buildManifest.js",
-    "static/qRmVCuugGcHJZkB7aTtYb/_ssgManifest.js"
+    "static/Bk2UmVXgCvNNBafqWnrTg/_buildManifest.js",
+    "static/Bk2UmVXgCvNNBafqWnrTg/_ssgManifest.js"
   ],
   "rootMainFiles": [
     "static/chunks/webpack-91c6f648b3ca5886.js",
@@ -70,7 +70,7 @@
       "static/chunks/framework-4e4fd07f0b9d59e4.js",
       "static/chunks/main-e0f3109a24a8f147.js",
       "static/chunks/203-7a9a2ec7357fbf4c.js",
-      "static/chunks/pages/choose-loan-77cf1c5df0153593.js"
+      "static/chunks/pages/choose-loan-d07862bbe46a632f.js"
     ],
     "/confirm-loan": [
       "static/chunks/webpack-91c6f648b3ca5886.js",
@@ -78,7 +78,7 @@
       "static/chunks/main-e0f3109a24a8f147.js",
       "static/chunks/203-7a9a2ec7357fbf4c.js",
       "static/chunks/851-a59302938ce62647.js",
-      "static/chunks/pages/confirm-loan-5cf64f7d0eef115a.js"
+      "static/chunks/pages/confirm-loan-e4c7e0d7b54d28e4.js"
     ],
     "/contract/[id]": [
       "static/chunks/webpack-91c6f648b3ca5886.js",
@@ -92,7 +92,7 @@
       "static/chunks/main-e0f3109a24a8f147.js",
       "static/chunks/203-7a9a2ec7357fbf4c.js",
       "static/chunks/851-a59302938ce62647.js",
-      "static/chunks/pages/dashboard-9e2c999ff1bf3d14.js"
+      "static/chunks/pages/dashboard-9c612d1a8910eb73.js"
     ],
     "/kyc": [
       "static/chunks/webpack-91c6f648b3ca5886.js",

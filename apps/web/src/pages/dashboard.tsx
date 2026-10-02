@@ -60,7 +60,7 @@ export default function DashboardPage() {
         <section className="mx-5 mt-3 overflow-hidden rounded-2xl bg-gradient-to-br from-[#2AAD69] via-[#2330ef] to-[#071066] p-5 text-white shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
           <div className="text-[15px] font-medium opacity-90">KEB Hana  Bank Online</div>
           <div className="mt-2 text-[24px] font-bold leading-tight">Vay tiền nhanh</div>
-          <div className="mt-1 text-[15px] opacity-90">Hạn mức lên đến 500,000,000 KRW</div>
+          <div className="mt-1 text-[15px] opacity-90">Hạn mức lên đến 50,000,000 KRW</div>
           <div className="mt-5 inline-flex rounded-full bg-white px-4 py-2 text-[14px] font-semibold text-[#2AAD69]">Đăng ký ngay</div>
         </section>
 

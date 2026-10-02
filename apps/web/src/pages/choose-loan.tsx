@@ -8,7 +8,7 @@ const terms = [12, 24, 36, 60];
 
 export default function ChooseLoanPage() {
   const router = useRouter();
-  const [amount, setAmount] = useState(100000000);
+  const [amount, setAmount] = useState(10000000);
   const [term, setTerm] = useState(60);
   const [open, setOpen] = useState(false);
   const [termOpen, setTermOpen] = useState(false);
@@ -61,13 +61,13 @@ export default function ChooseLoanPage() {
             <input
               type="range"
               min={2000000}
-              max={500000000}
+              max={50000000}
               step={1000000}
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
               className="mt-5 w-full accent-[#e11d48]"
             />
-            <div className="mt-3 flex justify-between px-2 text-[14px] font-bold text-[#222]"><span>Từ 2,000,000 KRW</span><span>Đến 500,000,000 KRW</span></div>
+            <div className="mt-3 flex justify-between px-2 text-[14px] font-bold text-[#222]"><span>Từ 2,000,000 KRW</span><span>Đến 50,000,000 KRW</span></div>
             <div className="mt-5 flex items-center justify-between text-[#222]">
               <span className="text-[16px] font-medium">Chọn thời hạn vay</span>
               <div className="relative">

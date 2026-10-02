@@ -9,9 +9,11 @@
   "scripts": {
     "dev:web": "npm run dev:stable -w apps/web",
     "dev:worker": "npm run dev -w apps/worker",
-    "build:web": "npm run build -w apps/web",
+    "build:web": "npm run db:generate && npm run build -w apps/web && node scripts/postbuild.js",
+    "build:web:deploy": "npm run db:generate && npm run build -w apps/web && node scripts/postbuild.js",
     "start:web": "npm run start -w apps/web",
     "build:worker": "npm run build -w apps/worker",
+    "postbuild:web": "echo 'postbuild chay trong build:web'",
     "db:generate": "npm run generate -w packages/shared",
     "db:migrate": "npm run migrate -w packages/shared",
     "db:seed": "npm run seed -w packages/shared",

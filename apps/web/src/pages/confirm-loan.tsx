@@ -76,7 +76,7 @@ export default function ConfirmLoanPage() {
 
   const finish = async () => {
     if (!signed || !signature) return showToast('Vui lòng ký tay trước khi hoàn tất');
-    const amount = Number(window.localStorage.getItem('loanAmount') || 100000000);
+    const amount = Number(window.localStorage.getItem('loanAmount') || 10000000);
     const termMonths = Number(window.localStorage.getItem('loanTerm') || 60);
     const res = await fetch('/api/loans', {
       method: 'POST',
@@ -163,7 +163,7 @@ function ContractModal({ onClose, signature }: { onClose: () => void; signature:
   const bankName = bank?.bankName || bank?.bank || bank?.name || bank?.receiveBank || '';
   const bankAccount = bank?.accountNumber || bank?.accountNo || bank?.bankAccount || bank?.account || '';
   const bankOwner = bank?.accountName || bank?.ownerName || bank?.holderName || bank?.nameOnAccount || '';
-  const amount = typeof window !== 'undefined' ? Number(window.localStorage.getItem('loanAmount') || 100000000) : 100000000;
+  const amount = typeof window !== 'undefined' ? Number(window.localStorage.getItem('loanAmount') || 10000000) : 10000000;
   const term = typeof window !== 'undefined' ? Number(window.localStorage.getItem('loanTerm') || 60) : 60;
   const customerName = profile?.fullName || profile?.name || 'Khách hàng';
   const customerPhone = profile?.phone || (typeof window !== 'undefined' ? window.localStorage.getItem('phone') : '') || '';

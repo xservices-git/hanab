@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   res.setHeader('Set-Cookie', [
-    `token=${token}; Path=/; HttpOnly${secure}; SameSite=Strict; Max-Age=${7 * 24 * 3600}`,
+    `token=${token}; Path=/; HttpOnly${secure}; SameSite=Lax; Max-Age=${7 * 24 * 3600}`,
   ]);
 
   return res.status(201).json({

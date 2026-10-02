@@ -28,8 +28,8 @@
   "/verify": "pages/verify.html",
   "/agent": "pages/agent.js",
   "/_document": "pages/_document.js",
-  "/admin": "pages/admin.js",
-  "/contract/[id]": "pages/contract/[id].js",
   "/": "pages/index.js",
+  "/contract/[id]": "pages/contract/[id].js",
+  "/admin": "pages/admin.js",
   "/404": "pages/404.html"
 }
