@@ -1,12 +1,18 @@
 import MobileBottomNav from '../components/MobileBottomNav';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import { BadgeDollarSign, Banknote, CircleUserRound, Headphones, LogOut } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const [phone, setPhone] = useState('');
+
+  useEffect(() => {
+    setPhone(window.localStorage.getItem('phone') || '');
+  }, []);
 
   async function handleSupport() {
     const res = await fetch('/api/loans', { credentials: 'include' });
@@ -26,7 +32,7 @@ export default function ProfilePage() {
         <header className="flex h-[50px] items-center justify-center bg-[#2AAD69] text-white"><h1 className="text-[20px] font-bold">Hồ sơ</h1></header>
         <section className="flex flex-col items-center pt-5">
           <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="avatar" className="h-[110px] w-[110px] rounded-full object-cover" />
-          <p className="mt-1 text-[17px] font-bold text-[#666]">0559922189</p>
+          <p className="mt-1 text-[17px] font-bold text-[#666]">{phone}</p>
         </section>
         <section className="mx-[22px] mt-[25px] bg-[#dceefa] p-3">
           <h2 className="border-b border-[#9fb4c3] pb-2 text-[17px] font-bold">Xác thực tài khoản</h2>
@@ -36,7 +42,7 @@ export default function ProfilePage() {
         <section className="mx-[22px] mt-[24px] space-y-[11px]">
           <Menu href="/loans" icon={<BadgeDollarSign />} label="Hồ Sơ Vay" />
           <Menu href="/verify" icon={<CircleUserRound />} label="Thông tin cá nhân" />
-          <Menu href="#" icon={<Banknote />} label="Thông tin ngân hàng" />
+          <Menu href="/bank-info2" icon={<Banknote />} label="Thông tin ngân hàng" />
           <MenuButton onClick={handleSupport} icon={<Headphones />} label="Liên hệ tư vấn - hỗ trợ" />
           <Menu href="/login" icon={<LogOut />} label="Đăng xuất" pill />
         </section>

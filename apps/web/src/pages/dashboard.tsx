@@ -16,14 +16,14 @@ const promoSlides = [
 export default function DashboardPage() {
   const router = useRouter();
   const { showToast } = useToast();
-  const [phone, setPhone] = useState('0559922189');
+  const [phone, setPhone] = useState('');
   const [checkingLoan, setCheckingLoan] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [withdrawNotice, setWithdrawNotice] = useState('078***1 đã rút 130,000,000 KRW');
   const withdrawNoticeIndex = useRef(0);
 
   useEffect(() => {
-    setPhone(window.localStorage.getItem('phone') || '0559922189');
+    setPhone(window.localStorage.getItem('phone') || '');
     const updateNotice = () => {
       withdrawNoticeIndex.current += 1;
       setWithdrawNotice(createWithdrawNotice(withdrawNoticeIndex.current));

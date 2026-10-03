@@ -2,18 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/loans": "pages/loans.js",
-  "/admin": "pages/admin.js",
-  "/api/loans": "pages/api/loans.js",
   "/signup": "pages/signup.js",
-  "/api/auth/register": "pages/api/auth/register.js",
-  "/dashboard": "pages/dashboard.js",
-  "/choose-loan": "pages/choose-loan.js",
-  "/api/auth/me": "pages/api/auth/me.js",
-  "/verify": "pages/verify.js",
-  "/kyc": "pages/kyc.js",
+  "/profile": "pages/profile.js",
   "/bank-info": "pages/bank-info.js",
-  "/confirm-loan": "pages/confirm-loan.js",
-  "/loan-success": "pages/loan-success.js",
-  "/api/admin/customers": "pages/api/admin/customers.js"
+  "/bank-info2": "pages/bank-info2.js"
 }
