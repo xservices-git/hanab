@@ -256,6 +256,15 @@ type ApiRouteConfig = {
   type __Unused = __Check
 }
 
+// Validate ../../../src/pages/api/admin/transactions.ts
+{
+  type __IsExpected<Specific extends ApiRouteConfig> = Specific
+  const handler = {} as typeof import("../../../src/pages/api/admin/transactions.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/pages/api/admin/users.ts
 {
   type __IsExpected<Specific extends ApiRouteConfig> = Specific
@@ -341,6 +350,15 @@ type ApiRouteConfig = {
 {
   type __IsExpected<Specific extends ApiRouteConfig> = Specific
   const handler = {} as typeof import("../../../src/pages/api/profile/me.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/pages/api/transactions/index.ts
+{
+  type __IsExpected<Specific extends ApiRouteConfig> = Specific
+  const handler = {} as typeof import("../../../src/pages/api/transactions/index.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

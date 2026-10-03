@@ -68,6 +68,8 @@ model User {
   sessions             Session[]
   activities           ActivityLog[]
   notifications        Notification[]
+  transactions         Transaction[]
+  createdTransactions  Transaction[] @relation("TransactionCreator")
 
   @@index([email])
   @@index([phone])
@@ -97,6 +99,27 @@ model CustomerProfile {
   bankAccounts      BankAccount[]
 
   @@index([citizenId])
+  @@index([createdAt])
+}
+
+enum TransactionType {
+  credit
+  debit
+}
+
+model Transaction {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        TransactionType
+  amount      Float
+  reason      String          @db.Text
+  createdById String?
+  createdBy   User?           @relation("TransactionCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime        @default(now())
+
+  @@index([userId])
+  @@index([type])
   @@index([createdAt])
 }
 

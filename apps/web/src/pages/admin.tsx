@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/jwt';
-import { Activity, AlertTriangle, Banknote, Bell, Briefcase, Building2, CheckCircle2, ChevronRight, ClipboardList, Clock3, CreditCard, Download, ExternalLink, Facebook, Headphones, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, Phone, Plus, Search, Send, ShieldCheck, UserRound, Users, X, XCircle } from 'lucide-react';
+import { Activity, AlertTriangle, Banknote, Bell, Briefcase, Building2, CheckCircle2, ChevronRight, ClipboardList, Clock3, CreditCard, Download, ExternalLink, Facebook, Headphones, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, MinusCircle, Phone, Plus, PlusCircle, Search, Send, ShieldCheck, UserRound, Users, X, XCircle } from 'lucide-react';
 import * as Recharts from 'recharts';
 import { useToast } from '@/components/ui/toast';
 
@@ -34,15 +34,17 @@ export default function AdminPage({ user, agents, customers, loans, logs }: Admi
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [loanFilterCustomer, setLoanFilterCustomer] = useState<string>('');
   const [page, setPage] = useState<Record<string, number>>({ customers: 1, loans: 1, agents: 1 });
-  useEffect(() => setPage({ customers: 1, loans: 1, agents: 1 }), [q, tab, statusFilter, dateFrom, dateTo]);
+  useEffect(() => setPage({ customers: 1, loans: 1, agents: 1 }), [q, tab, statusFilter, dateFrom, dateTo, loanFilterCustomer]);
   useEffect(() => { if (!isAdmin && tab === 'agents') setTab('overview'); }, [isAdmin, tab]);
+  useEffect(() => { if (tab !== 'loans') setLoanFilterCustomer(''); }, [tab]);
 
   const search = q.trim().toLowerCase();
   const pending = loans.filter((l) => ['draft', 'submitted', 'reviewing'].includes(l.status));
   const approved = loans.filter((l) => ['approved', 'disbursed', 'closed'].includes(l.status));
   const filteredCustomers = customers.filter((c) => has(search, [c.name, c.phone, c.email, c.profile?.fullName, c.profile?.citizenId, accountLabel(c)]) && inDateRange(c.createdAt, dateFrom, dateTo));
-  const filteredLoans = loans.filter((l) => has(search, [l.id, l.status, loanLabel(l.status), l.user?.name, l.user?.phone, l.user?.profile?.citizenId, l.assignedAgent?.name]) && (statusFilter === 'all' || l.status === statusFilter) && inDateRange(l.createdAt, dateFrom, dateTo));
+  const filteredLoans = loans.filter((l) => has(search, [l.id, l.status, loanLabel(l.status), l.user?.name, l.user?.phone, l.user?.profile?.citizenId, l.assignedAgent?.name]) && (statusFilter === 'all' || l.status === statusFilter) && (!loanFilterCustomer || l.userId === loanFilterCustomer) && inDateRange(l.createdAt, dateFrom, dateTo));
   const filteredAgents = agents.filter((a) => has(search, [a.name, a.phone, a.email, a.telegramLink, accountLabel(a)]) && inDateRange(a.createdAt, dateFrom, dateTo));
   const totalAmount = useMemo(() => loans.reduce((sum, l) => sum + Number(l.amount || 0), 0), [loans]);
 
@@ -97,8 +99,8 @@ export default function AdminPage({ user, agents, customers, loans, logs }: Admi
         <main className="space-y-4 p-3 lg:p-5">
           {tab !== 'overview' && <FilterBar statusFilter={statusFilter} onStatus={setStatusFilter} dateFrom={dateFrom} onDateFrom={setDateFrom} dateTo={dateTo} onDateTo={setDateTo} showStatus={tab === 'loans'} onClear={() => { setQ(''); setStatusFilter('all'); setDateFrom(''); setDateTo(''); }} />}
           {tab === 'overview' && <Overview loans={loans} customers={customers} agents={agents} pending={pending} approved={approved} totalAmount={totalAmount} isAdmin={isAdmin} />}
-          {tab === 'customers' && <Customers customers={filteredCustomers} isAdmin={isAdmin} page={page.customers || 1} onPage={(n: number) => setPage((p) => ({ ...p, customers: n }))} onOpenLoan={(loan: any, customer: any) => { setTab('loans'); setQ(loan?.id || customer?.phone || ''); }} />}
-          {tab === 'loans' && <Loans loans={filteredLoans} agents={agents} isAdmin={isAdmin} page={page.loans || 1} onPage={(n: number) => setPage((p) => ({ ...p, loans: n }))} />}
+          {tab === 'customers' && <Customers customers={filteredCustomers} isAdmin={isAdmin} page={page.customers || 1} onPage={(n: number) => setPage((p) => ({ ...p, customers: n }))} onOpenLoan={(loan: any, customer: any) => { setTab('loans'); setLoanFilterCustomer(customer?.id || loan?.userId || ''); setQ(''); }} />}
+          {tab === 'loans' && <div className="space-y-3"><Loans loans={filteredLoans} agents={agents} isAdmin={isAdmin} page={page.loans || 1} onPage={(n: number) => setPage((p) => ({ ...p, loans: n }))} loanFilterCustomer={loanFilterCustomer} onClearCustomerFilter={() => setLoanFilterCustomer('')} customers={customers} /></div>}
           {isAdmin && tab === 'agents' && <Agents agents={filteredAgents} loans={loans} logs={logs} page={page.agents || 1} onPage={(n: number) => setPage((p) => ({ ...p, agents: n }))} />}
         </main>
       </div>
@@ -120,12 +122,14 @@ function FilterBar({ statusFilter, onStatus, dateFrom, onDateFrom, dateTo, onDat
 
 function Overview({ loans, customers, agents, pending, approved, totalAmount, isAdmin }: any) {
   const recent = loans.slice(0, 7);
+  const totalBalance = useMemo(() => customers.reduce((sum: number, c: any) => sum + Number(c.balance || 0), 0), [customers]);
   return <>
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
       <Metric icon={ClipboardList} label={isAdmin ? 'Tổng hồ sơ' : 'Hồ sơ của tôi'} value={loans.length} />
       <Metric icon={Clock3} label="Chờ xử lý" value={pending.length} tone="amber" />
       <Metric icon={CheckCircle2} label="Đã duyệt" value={approved.length} tone="green" />
       <Metric icon={CreditCard} label="Tổng nhu cầu" value={money(totalAmount)} tone="blue" />
+      {isAdmin && <Metric icon={Banknote} label="Tổng số dư KH" value={money(totalBalance)} tone={totalBalance >= 0 ? 'green' : 'blue'} />}
     </div>
     <OverviewCharts loans={loans} />
     <TelegramHookCard />
@@ -133,7 +137,7 @@ function Overview({ loans, customers, agents, pending, approved, totalAmount, is
       <DataCard title="Hồ sơ mới nhất">
         <LoanTable loans={recent} agents={agents} compact />
       </DataCard>
-      <Card className="rounded-2xl border-slate-200"><CardContent className="p-4"><div className="text-lg font-black">Health</div><div className="mt-5 space-y-4"><Health label="Khách hàng" value={customers.length} />{isAdmin && <Health label="CS team" value={agents.length} />}<Health label="Tỉ lệ duyệt" value={`${loans.length ? Math.round((approved.length / loans.length) * 100) : 0}%`} /></div></CardContent></Card>
+      <Card className="rounded-2xl border-slate-200"><CardContent className="p-4"><div className="text-lg font-black">Health</div><div className="mt-5 space-y-4"><Health label="Khách hàng" value={customers.length} />{isAdmin && <Health label="CS team" value={agents.length} />}<Health label="Tỉ lệ duyệt" value={`${loans.length ? Math.round((approved.length / loans.length) * 100) : 0}%`} />{isAdmin && <Health label="Tổng số dư" value={money(totalBalance)} />}</div></CardContent></Card>
     </div>
   </>;
 }
@@ -168,6 +172,7 @@ function Customers({ customers, isAdmin, page, onPage, onOpenLoan }: any) {
   const reloadAdmin = () => router.replace(router.asPath, undefined, { scroll: false });
   const [contract, setContract] = useState<any>(null);
   const [editing, setEditing] = useState<any>(null);
+  const [txFor, setTxFor] = useState<any>(null);
   async function toggleCustomer(c: any) {
     const locked = isLocked(c);
     const res = await fetch('/api/admin/customers', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerId: c.id, locked: !locked }) });
@@ -184,17 +189,18 @@ function Customers({ customers, isAdmin, page, onPage, onOpenLoan }: any) {
   return <DataCard title="Khách hàng">
     <div className="overflow-x-auto">
       <Table className="min-w-[1080px]">
-        <TableHeader><TableRow><TableHead>Khách hàng</TableHead><TableHead>CCCD</TableHead><TableHead>Thu nhập</TableHead><TableHead>Ngày</TableHead><TableHead>Hồ sơ</TableHead><TableHead>Trạng thái</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
-        <TableBody>{pager.items.map((c: any) => <Customer key={c.id} c={c} onViewContract={setContract} onOpenLoan={onOpenLoan} onToggleAccount={isAdmin ? toggleCustomer : undefined} onToggleWithdrawViolation={isAdmin ? toggleWithdrawViolation : undefined} onEdit={isAdmin ? setEditing : undefined} />)}</TableBody>
+        <TableHeader><TableRow><TableHead>Khách hàng</TableHead><TableHead>CCCD</TableHead><TableHead>Số dư</TableHead><TableHead>Thu nhập</TableHead><TableHead>Hồ sơ</TableHead><TableHead>Trạng thái</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
+        <TableBody>{pager.items.map((c: any) => <Customer key={c.id} c={c} onViewContract={setContract} onOpenLoan={onOpenLoan} onToggleAccount={isAdmin ? toggleCustomer : undefined} onToggleWithdrawViolation={isAdmin ? toggleWithdrawViolation : undefined} onEdit={isAdmin ? setEditing : undefined} onOpenTransaction={isAdmin ? setTxFor : undefined} />)}</TableBody>
       </Table>
     </div>
     {!customers.length && <Empty text="Không có khách hàng" />}
     <Pagination page={pager.page} totalPages={pager.totalPages} total={customers.length} pageSize={12} onPage={onPage} />
     {contract && <ContractPopup data={contract} isAdmin={isAdmin} onClose={() => setContract(null)} onSaved={() => { reloadAdmin(); }} />}
     {editing && <EditCustomerPopup customer={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); reloadAdmin(); }} />}
+    {txFor && <TransactionPopup customer={txFor} onClose={() => setTxFor(null)} onSaved={() => { setTxFor(null); reloadAdmin(); }} />}
   </DataCard>;
 }
-function Loans({ loans, agents, isAdmin, page, onPage }: any) { const pager = paginate(loans, page, 12); return <DataCard title="Hồ sơ vay"><LoanTable loans={pager.items} agents={agents} isAdmin={isAdmin} />{!loans.length && <Empty text="Không có hồ sơ" />}<Pagination page={pager.page} totalPages={pager.totalPages} total={loans.length} pageSize={12} onPage={onPage} /></DataCard>; }
+function Loans({ loans, agents, isAdmin, page, onPage, loanFilterCustomer, onClearCustomerFilter, customers }: any) { const pager = paginate(loans, page, 12); const filteredCustomer = customers?.find((c: any) => c.id === loanFilterCustomer); return <DataCard title="Hồ sơ vay">{loanFilterCustomer && <div className="mb-3 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800"><span>Đang lọc theo khách: <b>{filteredCustomer?.name || filteredCustomer?.phone || loanFilterCustomer}</b></span><button className="rounded-lg bg-white px-2 py-1 text-xs font-bold text-blue-700 hover:bg-blue-100" onClick={onClearCustomerFilter}>Bỏ lọc</button></div>}<LoanTable loans={pager.items} agents={agents} isAdmin={isAdmin} />{!loans.length && <Empty text="Không có hồ sơ" />}<Pagination page={pager.page} totalPages={pager.totalPages} total={loans.length} pageSize={12} onPage={onPage} /></DataCard>; }
 
 function Agents({ agents, loans, logs, page, onPage }: any) {
   const router = useRouter();
@@ -267,26 +273,40 @@ function LoanTable({ loans, agents, compact, isAdmin }: any) {
       {!compact && isAdmin && <TableCell><select disabled={busy === l.id} value={l.assignedAgentId || ''} onChange={(e) => update(l.id, { assignedAgentId: e.target.value })} className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm"><option value="">Chưa gán</option>{agents.map((a: any) => <option key={a.id} value={a.id}>{a.name || a.phone}</option>)}</select></TableCell>}
       <TableCell><div className="flex flex-wrap justify-end gap-2" onClick={(e) => e.stopPropagation()}>
         {isAdmin && <Button size="sm" variant={wv ? 'destructive' : 'outline'} disabled={busy === l.id} onClick={() => update(l.id, { withdrawViolation: !wv })}><AlertTriangle size={14} />{wv ? 'Bỏ rút tiền vi phạm' : 'Rút tiền vi phạm'}</Button>}
-        {isAdmin && !wv && !['disbursed', 'closed'].includes(l.status) && <Button size="sm" disabled={busy === l.id} onClick={() => update(l.id, { status: 'approved' })}><CheckCircle2 size={14} /> Duyệt</Button>}
-        {isAdmin && !wv && !['disbursed', 'closed'].includes(l.status) && <Button size="sm" variant="outline" disabled={busy === l.id} onClick={() => update(l.id, { status: 'rejected', rejectionReason: 'Từ chối bởi admin' })}><XCircle size={14} /> Từ chối</Button>}
+        {isAdmin && !wv && !['approved', 'disbursed', 'closed'].includes(l.status) && <Button size="sm" disabled={busy === l.id} onClick={() => update(l.id, { status: 'approved' })}><CheckCircle2 size={14} /> Duyệt</Button>}
+        {isAdmin && !wv && !['approved', 'rejected', 'disbursed', 'closed'].includes(l.status) && <Button size="sm" variant="outline" disabled={busy === l.id} onClick={() => update(l.id, { status: 'rejected', rejectionReason: 'Từ chối bởi admin' })}><XCircle size={14} /> Từ chối</Button>}
       </div></TableCell>
     </TableRow>;
   })}</TableBody></Table>;
 }
 
-function Customer({ c, onViewContract, onOpenLoan, onToggleAccount, onToggleWithdrawViolation, onEdit }: any) {
+function Customer({ c, onViewContract, onOpenLoan, onToggleAccount, onToggleWithdrawViolation, onEdit, onOpenTransaction, onOpenHistory }: any) {
   const p = c.profile;
   const loans = c.loans || [];
   const latestLoan = loans[0];
   const hasProfile = Boolean(p || loans.length);
+  const txs = c.transactions || [];
+  const txCredit = txs.filter((t: any) => t.type === 'credit').reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+  const txDebit = txs.filter((t: any) => t.type === 'debit').reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+  const balance = txCredit - txDebit;
   return <TableRow className={onEdit ? 'cursor-pointer hover:bg-slate-50' : ''} onClick={() => onEdit && onEdit(c)}>
     <TableCell><Person name={c.name || p?.fullName || c.phone || '-'} sub={c.phone || c.email || p?.address || '-'} /></TableCell>
     <TableCell className="font-mono text-xs">{p?.citizenId || '-'}</TableCell>
+    <TableCell><div title={`Cộng: ${money(txCredit)} · Trừ: ${money(txDebit)}`}><b className={balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}>{balance >= 0 ? '+' : '-'}{money(Math.abs(balance))}</b>{txs.length > 0 && <div className="text-[10px] text-slate-400">tính từ {txs.length} giao dịch</div>}</div></TableCell>
     <TableCell>{money(p?.monthlyIncome || 0)}<div className="text-xs text-slate-500">{p?.jobTitle || 'Chưa cập nhật nghề'}</div></TableCell>
-    <TableCell>{date(latestLoan?.createdAt || c.createdAt)}</TableCell>
-    <TableCell><Badge variant="secondary">{loans.length} hồ sơ</Badge>{latestLoan && <div className="mt-1 text-xs text-slate-500">{money(latestLoan.amount)} · {latestLoan.termMonths} tháng</div>}</TableCell>
+    <TableCell>
+      <button type="button" onClick={(e) => { e.stopPropagation(); onOpenLoan && onOpenLoan(latestLoan || null, c); }} className="group flex flex-col items-start gap-1 rounded-lg px-1 py-1 text-left transition hover:bg-slate-100">
+        <Badge variant="secondary" className="cursor-pointer">{loans.length} hồ sơ</Badge>
+        {latestLoan ? (
+          <div className="text-xs text-slate-500">{money(latestLoan.amount)} · {latestLoan.termMonths} tháng</div>
+        ) : (
+          <div className="text-xs italic text-slate-400">Chưa có hồ sơ</div>
+        )}
+        <span className="text-xs font-bold text-blue-600 opacity-70 group-hover:opacity-100">Xem hồ sơ vay →</span>
+      </button>
+    </TableCell>
     <TableCell><AccountStatus account={c} /></TableCell>
-    <TableCell className="text-right"><div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>{latestLoan ? <><Button size="sm" variant="outline" onClick={() => onViewContract({ customer: c, loan: latestLoan, contract: latestLoan.contracts?.[0] })}>Xem hợp đồng</Button><Button size="sm" onClick={() => onOpenLoan(latestLoan, c)}>Xem hồ sơ vay</Button></> : <span className="text-sm text-slate-400">Chưa có hợp đồng</span>}{onToggleWithdrawViolation && <Button size="sm" variant={isWithdrawViolation(c) ? 'destructive' : 'outline'} onClick={() => onToggleWithdrawViolation(c)}>{isWithdrawViolation(c) ? 'Bỏ rút tiền vi phạm' : 'Rút tiền vi phạm'}</Button>}{onToggleAccount && <Button size="sm" variant={isLocked(c) ? 'outline' : 'destructive'} onClick={() => onToggleAccount(c)}>{isLocked(c) ? 'Mở khóa' : 'Khóa'}</Button>}</div></TableCell>
+    <TableCell className="text-right"><div className="flex flex-wrap justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>{latestLoan && <Button size="sm" variant="outline" onClick={() => onViewContract({ customer: c, loan: latestLoan, contract: latestLoan.contracts?.[0] })}>Hợp đồng</Button>}{onOpenTransaction && <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-7 px-2 text-xs" onClick={() => onOpenTransaction({ ...c, _txType: 'credit' })}><PlusCircle size={12} /> Cộng</Button>}{onOpenTransaction && <Button size="sm" className="bg-rose-600 hover:bg-rose-700 h-7 px-2 text-xs" onClick={() => onOpenTransaction({ ...c, _txType: 'debit' })}><MinusCircle size={12} /> Trừ</Button>}{onToggleAccount && <Button size="sm" variant={isLocked(c) ? 'outline' : 'destructive'} className="h-7 px-2 text-xs" onClick={() => onToggleAccount(c)}>{isLocked(c) ? 'Mở' : 'Khóa'}</Button>}{onToggleWithdrawViolation && <Button size="sm" variant={isWithdrawViolation(c) ? 'destructive' : 'outline'} className="h-7 px-2 text-xs" onClick={() => onToggleWithdrawViolation(c)}>{isWithdrawViolation(c) ? 'Bỏ rút tiền vi phạm' : 'Rút tiền vi phạm'}</Button>}</div></TableCell>
   </TableRow>;
 }
 
@@ -305,6 +325,146 @@ function BankMini({ profile }: any) {
   const b = profile?.bankAccounts?.find((x: any) => x.isPrimary) || profile?.bankAccounts?.[0];
   if (!b) return <span className="text-sm text-slate-400">-</span>;
   return <div className="text-sm"><div className="font-bold">{b.bankName}</div><div className="font-mono text-xs text-slate-500">{b.accountNumber}</div></div>;
+}
+
+function TransactionPopup({ customer, onClose, onSaved }: { customer: any; onClose: () => void; onSaved: () => void }) {
+  const { showToast } = useToast();
+  const type: 'credit' | 'debit' = customer._txType === 'debit' ? 'debit' : 'credit';
+  const [amount, setAmount] = useState('');
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/admin/transactions?customerId=${encodeURIComponent(customer.id)}`);
+        const json = await res.json();
+        if (alive && json.ok) setHistory(json.data || []);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [customer.id]);
+
+  async function submit() {
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0) return showToast('Số tiền phải > 0');
+    if (!reason.trim()) return showToast('Vui lòng nhập lý do');
+    setBusy(true);
+    const res = await fetch('/api/admin/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customerId: customer.id, type, amount: amt, reason: reason.trim() }),
+    });
+    setBusy(false);
+    if (!res.ok) return showToast((await res.json()).error || 'Không tạo được giao dịch');
+    showToast(type === 'credit' ? 'Đã cộng tiền' : 'Đã trừ tiền');
+    onSaved();
+  }
+
+  const totalCredit = history.filter((t) => t.type === 'credit').reduce((s, t) => s + Number(t.amount || 0), 0);
+  const totalDebit = history.filter((t) => t.type === 'debit').reduce((s, t) => s + Number(t.amount || 0), 0);
+  const balance = totalCredit - totalDebit;
+  const isCredit = type === 'credit';
+  const color = isCredit ? 'emerald' : 'rose';
+  const ColorIcon = isCredit ? PlusCircle : MinusCircle;
+
+  return (
+    <div onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4">
+      <div className="my-auto w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className={`flex items-center justify-between border-b border-slate-100 bg-${color}-50 px-6 py-4`}>
+          <div>
+            <div className={`flex items-center gap-2 text-xl font-black text-${color}-700`}>
+              <ColorIcon className={`h-6 w-6 text-${color}-600`} />
+              {isCredit ? 'Cộng tiền cho khách' : 'Trừ tiền khách'}
+            </div>
+            <div className="text-xs text-slate-500">{customer.name || customer.profile?.fullName || customer.phone} · ID: <span className="font-mono">{customer.id.slice(0, 8)}</span></div>
+          </div>
+          <Button variant="outline" onClick={onClose} disabled={busy}>Đóng</Button>
+        </div>
+
+        <div className="grid gap-3 p-6 sm:grid-cols-3">
+          <div className="rounded-2xl bg-emerald-50 p-3 text-center">
+            <div className="text-xs font-bold uppercase text-emerald-700">Tổng cộng</div>
+            <div className="mt-1 text-base font-black text-emerald-700">{money(totalCredit)}</div>
+          </div>
+          <div className="rounded-2xl bg-rose-50 p-3 text-center">
+            <div className="text-xs font-bold uppercase text-rose-700">Tổng trừ</div>
+            <div className="mt-1 text-base font-black text-rose-700">{money(totalDebit)}</div>
+          </div>
+          <div className="rounded-2xl bg-slate-900 p-3 text-center text-white">
+            <div className="text-xs font-bold uppercase text-slate-300">Số dư</div>
+            <div className="mt-1 text-base font-black">{money(balance)}</div>
+          </div>
+        </div>
+
+        <div className="space-y-3 px-6 pb-4">
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">Số tiền (KRW)</span>
+            <input
+              autoFocus
+              type="number"
+              min={1}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Nhập số tiền..."
+              className={`h-11 w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm text-slate-800 shadow-sm focus:border-${color}-500 focus:outline-none focus:ring-4 focus:ring-${color}-500/15`}
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-600">Lý do</span>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={2}
+              placeholder={isCredit ? 'VD: Hoàn tiền hồ sơ #abc12345' : 'VD: Trừ phí phạt trả chậm'}
+              className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-sm text-slate-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/15"
+            />
+          </label>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={onClose} disabled={busy}>Huỷ</Button>
+            <Button onClick={submit} disabled={busy} className={isCredit ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}>
+              {busy ? 'Đang lưu...' : isCredit ? 'Xác nhận cộng' : 'Xác nhận trừ'}
+            </Button>
+          </div>
+        </div>
+
+        <div className="border-t border-slate-100 bg-slate-50 px-6 py-4">
+          <div className="mb-2 text-sm font-black text-slate-700">Lịch sử giao dịch</div>
+          {loading ? (
+            <div className="py-4 text-center text-sm text-slate-500">Đang tải...</div>
+          ) : !history.length ? (
+            <div className="py-4 text-center text-sm text-slate-500">Chưa có giao dịch</div>
+          ) : (
+            <div className="max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white">
+              {history.map((t) => {
+                const credit = t.type === 'credit';
+                return (
+                  <div key={t.id} className="flex items-start gap-3 border-b border-slate-100 p-3 last:border-b-0">
+                    <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl ${credit ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                      {credit ? <PlusCircle size={16} /> : <MinusCircle size={16} />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`font-black ${credit ? 'text-emerald-700' : 'text-rose-700'}`}>{credit ? '+' : '-'}{money(t.amount)}</span>
+                        <span className="text-xs text-slate-400">{dateTime(t.createdAt)}</span>
+                      </div>
+                      <div className="mt-0.5 break-words text-xs text-slate-600">{t.reason}</div>
+                      <div className="mt-0.5 text-[11px] text-slate-400">bởi {t.createdBy?.name || t.createdBy?.phone || 'admin'}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function EditCustomerPopup({ customer, onClose, onSaved }: { customer: any; onClose: () => void; onSaved: () => void }) {
@@ -695,7 +855,7 @@ function KycImages({ kyc }: any) {
 function InfoBox({ icon: Icon, title, rows }: any) { return <div className="self-start rounded-2xl border border-slate-200 p-3"><div className="mb-2 flex items-center gap-2 font-black">{Icon && <Icon size={17} className="text-blue-600" />}{title}</div><div className="space-y-1.5">{rows.map(([label, value]: any[]) => <div key={label} className="grid grid-cols-[132px_1fr] gap-2 text-sm"><div className="font-bold text-slate-400">{label}</div><div className="font-semibold text-slate-700">{value}</div></div>)}</div></div>; }
 function DataCard({ title, subtitle, children }: any) { return <Card className="rounded-2xl border-slate-200 bg-white shadow-sm"><CardContent className="p-0"><div className="border-b border-slate-100 p-4"><div className="text-lg font-black">{title}</div><div className="text-sm text-slate-500">{subtitle}</div></div><div className="p-4 lg:p-4">{children}</div></CardContent></Card>; }
 function Metric({ icon: Icon, label, value, tone }: any) { const color = tone === 'green' ? 'bg-emerald-50 text-emerald-700' : tone === 'amber' ? 'bg-amber-50 text-amber-700' : tone === 'blue' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700'; return <Card className="rounded-2xl border-slate-200"><CardContent className="flex items-center gap-4 p-5"><div className={`grid h-12 w-12 place-items-center rounded-2xl ${color}`}><Icon size={22} /></div><div><div className="text-2xl font-black">{value}</div><div className="text-sm text-slate-500">{label}</div></div></CardContent></Card>; }
-function Person({ name, sub }: any) { return <div className="flex min-w-0 items-center gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-slate-100"><UserRound size={18} /></div><div className="min-w-0"><div className="truncate font-bold">{name}</div><div className="truncate text-xs text-slate-500">{sub}</div></div></div>; }
+function Person({ name, sub }: any) { return <div className="flex min-w-0 items-center gap-2"><div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-slate-100"><UserRound size={15} /></div><div className="min-w-0"><div className="truncate text-sm font-bold">{name}</div><div className="truncate text-xs text-slate-500">{sub}</div></div></div>; }
 function Tile({ label, value }: any) { return <div className="rounded-2xl bg-slate-50 p-3"><div className="text-xs font-bold uppercase text-slate-400">{label}</div><div className="mt-1 truncate font-bold">{value}</div></div>; }
 function Health({ label, value }: any) { return <div className="flex items-center justify-between rounded-2xl bg-slate-50 p-4"><span className="text-sm text-slate-500">{label}</span><b>{value}</b></div>; }
 function Empty({ text }: any) { return <div className="p-8 text-center text-sm text-slate-500">{text}</div>; }
@@ -749,7 +909,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   const customerWhere = isAdmin ? { role: 'user' as const } : { role: 'user' as const, loans: { some: { assignedAgentId: user.id } } };
   const [agents, customers, loans, logs] = await Promise.all([
     prisma.user.findMany({ where: { role: 'agent' }, select: { id: true, name: true, phone: true, email: true, telegramLink: true, lockedUntil: true, lastLoginAt: true, createdAt: true }, orderBy: { createdAt: 'desc' } }),
-    prisma.user.findMany({ where: customerWhere, select: { id: true, name: true, phone: true, email: true, telegramLink: true, lockedUntil: true, lastLoginAt: true, createdAt: true, profile: { include: { kycs: { orderBy: { createdAt: 'desc' } }, bankAccounts: { orderBy: { createdAt: 'desc' } } } }, loans: { where: loanWhere, include: { contracts: true }, orderBy: { createdAt: 'desc' } } }, orderBy: { createdAt: 'desc' }, take: 300 }),
+    prisma.user.findMany({ where: customerWhere, select: { id: true, name: true, phone: true, email: true, telegramLink: true, lockedUntil: true, lastLoginAt: true, createdAt: true, profile: { include: { kycs: { orderBy: { createdAt: 'desc' } }, bankAccounts: { orderBy: { createdAt: 'desc' } } } }, loans: { where: loanWhere, include: { contracts: true }, orderBy: { createdAt: 'desc' } }, transactions: { select: { type: true, amount: true } } }, orderBy: { createdAt: 'desc' }, take: 300 }),
     prisma.loan.findMany({
       where: loanWhere,
       include: {

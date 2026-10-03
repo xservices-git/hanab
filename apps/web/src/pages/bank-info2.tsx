@@ -53,13 +53,9 @@ export default function BankInfoPage() {
 
               <div className="mt-4 text-[12px] text-white/65">Số tài khoản</div>
               <div className="mt-1 font-mono text-[21px] font-black tracking-[0.12em]">
-<<<<<<< HEAD
                 {bank?.accountNumber
                   ? `**** **** **** ${bank.accountNumber.slice(-4)}`
                   : '************'}
-=======
-                {bank?.accountNumber || '************'}
->>>>>>> 0069e1a2ca4945e0d8ba9236a2136bf9b4952166
               </div>
 
               {bank?.isPrimary && (

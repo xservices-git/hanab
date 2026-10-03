@@ -2,11 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/signup": "pages/signup.js",
-  "/personal-info": "pages/personal-info.js",
-  "/loans": "pages/loans.js",
-  "/api/loans": "pages/api/loans.js",
-  "/profile": "pages/profile.js",
+  "/admin": "pages/admin.js",
   "/contract/[id]": "pages/contract/[id].js",
-  "/api/profile/me": "pages/api/profile/me.js"
+  "/profile": "pages/profile.js",
+  "/api/admin/transactions": "pages/api/admin/transactions.js"
 }

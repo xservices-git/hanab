@@ -9,21 +9,37 @@ export default function ProfilePage() {
   const router = useRouter();
   const { showToast } = useToast();
   const [phone, setPhone] = useState('');
+  const [supportLink, setSupportLink] = useState<string | null>(null);
+  const [supportAgentName, setSupportAgentName] = useState<string>('');
 
   useEffect(() => {
     setPhone(window.localStorage.getItem('phone') || '');
+    // Load CS link for the assigned agent (if any)
+    fetch('/api/loans', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        const loan = json?.data?.[0];
+        if (loan?.assignedAgent?.telegramLink) {
+          setSupportLink(loan.assignedAgent.telegramLink);
+          setSupportAgentName(loan.assignedAgent.name || loan.assignedAgent.phone || 'CSKH');
+        }
+      })
+      .catch(() => {});
   }, []);
 
   async function handleSupport() {
+    if (supportLink) {
+      window.open(supportLink, '_blank', 'noopener,noreferrer');
+      return;
+    }
     const res = await fetch('/api/loans', { credentials: 'include' });
     if (res.status === 401) { router.push('/login'); return; }
     if (!res.ok) return;
     const json = await res.json();
     const loan = json?.data?.[0];
-    if (!loan) { showToast('Bạn chưa đăng kí khoản vay'); return; }
-    const link = loan.assignedAgent?.telegramLink;
-    if (link) window.location.href = link;
-    else showToast('Hồ sơ vay đã được tạo', 'Chưa có link sale, vui lòng chờ CS liên hệ');
+    const link = loan?.assignedAgent?.telegramLink;
+    if (link) window.open(link, '_blank', 'noopener,noreferrer');
+    else showToast('Hồ sơ chưa được gán CS', 'Vui lòng chờ hoặc liên hệ tổng đài');
   }
 
   async function openContract() {

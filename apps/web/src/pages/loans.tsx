@@ -3,19 +3,40 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Download, FileText, X } from 'lucide-react';
 import MobileBottomNav from '@/components/MobileBottomNav';
 
+function maskAccount(num?: string) {
+  if (!num) return '************';
+  const cleaned = String(num).replace(/\s+/g, '');
+  if (cleaned.length <= 4) return cleaned;
+  return `**** **** **** ${cleaned.slice(-4)}`;
+}
+
 function money(v: number) {
   return new Intl.NumberFormat('ko-KR').format(Number(v || 0)) + ' KRW';
 }
 
 function dt(v?: string) {
   if (!v) return '-';
-  return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(v));
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).format(new Date(v));
 }
+
+type Tx = {
+  id: string;
+  type: 'credit' | 'debit';
+  amount: number;
+  reason: string;
+  createdAt: string;
+  createdBy?: { id: string; name: string } | null;
+};
 
 export default function LoansPage() {
   const [loan, setLoan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
+  const [txs, setTxs] = useState<Tx[]>([]);
+  const [txLoading, setTxLoading] = useState(false);
 
   useEffect(() => {
     fetch('/api/loans', { credentials: 'include' })
@@ -23,6 +44,20 @@ export default function LoansPage() {
       .then((j) => setLoan(j?.data?.[0] || null))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    setTxLoading(true);
+    fetch('/api/transactions', { credentials: 'include' })
+      .then((r) => r.status === 401 ? (location.href = '/login', null) : r.json())
+      .then((j) => setTxs(Array.isArray(j?.data) ? j.data : []))
+      .finally(() => setTxLoading(false));
+  }, []);
+
+  const balance = useMemo(() => {
+    return txs
+      .filter((t) => t.reason !== 'Số dư ví')
+      .reduce((sum, t) => sum + (t.type === 'credit' ? t.amount : -t.amount), 0);
+  }, [txs]);
 
   const bank = useMemo(() => loan?.user?.profile?.bankAccounts?.[0] || null, [loan]);
   const isApproved = ['approved', 'disbursed', 'closed'].includes(String(loan?.status || '').toLowerCase());
@@ -60,17 +95,60 @@ export default function LoansPage() {
               <div className="mt-7 text-[12px] text-white/65">Chủ tài khoản</div>
               <div className="mt-1 text-[17px] font-black">{bank?.accountName || loan?.user?.profile?.fullName || loan?.user?.name || '-'}</div>
               <div className="mt-4 text-[12px] text-white/65">Số tài khoản</div>
-              <div className="mt-1 font-mono text-[21px] font-black tracking-[0.12em]">{bank?.accountNumber || '************'}</div>
+              <div className="mt-1 font-mono text-[21px] font-black tracking-[0.12em]">{maskAccount(bank?.accountNumber)}</div>
             </div>
 
             <a href={`/contract/${loan.id}`} target="_blank" rel="noreferrer" className="block text-[15px] font-bold text-[#2AAD69] underline">Hồ sơ vay</a>
 
             <div>
-              <div className="mb-2 text-[15px] font-bold text-[#2AAD69] underline">Biến động số dư</div>
-              <div className="rounded-2xl bg-white p-4 text-sm shadow-sm ring-1 ring-slate-100">
-                {loan.status === 'approved' || loan.status === 'disbursed' ? (
-                  <div className="flex justify-between"><span>Số dư ví</span><b className="text-emerald-600">+{money(loan.amount)}</b></div>
-                ) : <span className="text-slate-500">Chưa có biến động số dư</span>}
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-[15px] font-bold text-[#2AAD69] underline">Biến động số dư</div>
+                <div className="text-[13px] text-slate-500">
+                  Số dư:&nbsp;
+                  <b className={balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
+                    {balance >= 0 ? '+' : '-'}{money(Math.abs(balance))}
+                  </b>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 divide-y divide-slate-100">
+                {txLoading ? (
+                  <div className="p-4 text-center text-sm text-slate-500">Đang tải...</div>
+                ) : (() => {
+                    const approved = ['approved', 'disbursed', 'closed'].includes(String(loan?.status || '').toLowerCase());
+                    const disbursedRow = approved ? [{
+                      id: 'disbursed',
+                      type: 'credit' as const,
+                      amount: Number(loan.amount || 0),
+                      reason: 'Số dư ví',
+                      createdAt: loan.approvedAt || loan.updatedAt || loan.createdAt,
+                      createdBy: null as { id: string; name: string } | null,
+                      _isDisbursed: true,
+                    }] : [];
+                    // Gộp disbursed + txs, loại bỏ trùng disbursed từ DB
+                    const merged = [...disbursedRow, ...txs.filter((t) => t.reason !== 'Số dư ví')]
+                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                    if (merged.length === 0) {
+                      return <div className="p-4 text-center text-sm text-slate-500">Chưa có biến động số dư</div>;
+                    }
+                    return merged.map((t) => {
+                      const isCredit = t.type === 'credit';
+                      return (
+                        <div key={t.id} className="flex items-start justify-between gap-3 p-4">
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-[14px] font-semibold text-slate-800">
+                              {t.reason || (isCredit ? 'Cộng tiền' : 'Trừ tiền')}
+                            </div>
+                            <div className="mt-1 text-[12px] text-slate-500">
+                              {(t as any)._isDisbursed ? 'Số dư ví' : ''}{dt(t.createdAt)}
+                            </div>
+                          </div>
+                          <div className={`shrink-0 text-[15px] font-black ${isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {isCredit ? '+' : '-'}{money(t.amount)}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
               </div>
             </div>
 

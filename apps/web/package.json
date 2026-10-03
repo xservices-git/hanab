@@ -8,7 +8,8 @@
     "start": "next start -p 3000",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "dev:stable": "node ../../scripts/clean-next-cache.js && next dev --webpack -p 3000 -H 127.0.0.1"
+    "dev:stable": "node ../../scripts/clean-next-cache.js && next dev --webpack -p 3000 -H 127.0.0.1",
+    "postinstall": "prisma generate --schema=../../packages/shared/prisma/schema.prisma"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.0",

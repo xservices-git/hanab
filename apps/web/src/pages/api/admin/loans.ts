@@ -66,6 +66,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
     if (actor.role === 'admin' && assignedAgentId !== undefined) data.assignedAgentId = assignedAgentId || null;
 
+    // Khi duyệt (approved) hoặc giải ngân (disbursed) LẦN ĐẦU, tự tạo transaction cộng tiền để user thấy trong "Biến động số dư"
+    const wasAlreadyFinal = ['approved', 'disbursed', 'closed'].includes(String(existing.status || '').toLowerCase());
+    const isNowFinal = ['approved', 'disbursed', 'closed'].includes(String(data.status || '').toLowerCase());
+    if (!wasAlreadyFinal && isNowFinal) {
+      const fresh = await prisma.loan.findUnique({ where: { id: loanId }, select: { amount: true, userId: true } });
+      if (fresh && Number(fresh.amount) > 0) {
+        await prisma.transaction.create({
+          data: {
+            userId: fresh.userId,
+            type: 'credit',
+            amount: Number(fresh.amount),
+            reason: 'Số dư ví',
+            createdById: actor.id,
+          },
+        });
+      }
+    }
+
     const loan = await prisma.loan.update({
       where: { id: loanId },
       data,
