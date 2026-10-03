@@ -3,9 +3,8 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/signup": "pages/signup.js",
-  "/personal-info": "pages/personal-info.js",
   "/profile": "pages/profile.js",
+  "/personal-info": "pages/personal-info.js",
   "/contract/[id]": "pages/contract/[id].js",
-  "/api/profile/me": "pages/api/profile/me.js",
-  "/api/loans": "pages/api/loans.js"
+  "/api/profile/me": "pages/api/profile/me.js"
 }
