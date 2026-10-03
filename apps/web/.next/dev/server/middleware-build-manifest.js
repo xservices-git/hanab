@@ -9,10 +9,7 @@ globalThis.__BUILD_MANIFEST = {
     "static/development/_buildManifest.js",
     "static/development/_ssgManifest.js"
   ],
-  "rootMainFiles": [
-    "static/chunks/webpack.js",
-    "static/chunks/main-app.js"
-  ],
+  "rootMainFiles": [],
   "rootMainFilesTree": {},
   "pages": {
     "/_app": [
@@ -25,10 +22,15 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/bank-info2": [
+    "/contract/[id]": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/bank-info2.js"
+      "static/chunks/pages/contract/[id].js"
+    ],
+    "/personal-info": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/personal-info.js"
     ],
     "/profile": [
       "static/chunks/webpack.js",

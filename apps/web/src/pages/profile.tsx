@@ -26,6 +26,16 @@ export default function ProfilePage() {
     else showToast('Hồ sơ vay đã được tạo', 'Chưa có link sale, vui lòng chờ CS liên hệ');
   }
 
+  async function openContract() {
+    const res = await fetch('/api/loans', { credentials: 'include' });
+    if (res.status === 401) { router.push('/login'); return; }
+    if (!res.ok) return;
+    const json = await res.json();
+    const loan = json?.data?.[0];
+    if (!loan) { router.push('/loans'); return; }
+    window.open(`/contract/${loan.id}`, '_blank', 'noopener,noreferrer');
+  }
+
   return (
     <main className="min-h-screen bg-[#142014] text-[#333]">
       <div className="mx-auto min-h-screen w-full max-w-[390px] bg-white pb-[61px]">
@@ -40,8 +50,8 @@ export default function ProfilePage() {
           <Link href="/verify" className="block text-right text-[17px] font-bold text-[#d62244]">Xác thực ngay</Link>
         </section>
         <section className="mx-[22px] mt-[24px] space-y-[11px]">
-          <Menu href="/loans" icon={<BadgeDollarSign />} label="Hồ Sơ Vay" />
-          <Menu href="/verify" icon={<CircleUserRound />} label="Thông tin cá nhân" />
+          <MenuButton onClick={openContract} icon={<BadgeDollarSign />} label="Hồ Sơ Vay" />
+          <Menu href="/personal-info" icon={<CircleUserRound />} label="Thông tin cá nhân" />
           <Menu href="/bank-info2" icon={<Banknote />} label="Thông tin ngân hàng" />
           <MenuButton onClick={handleSupport} icon={<Headphones />} label="Liên hệ tư vấn - hỗ trợ" />
           <Menu href="/login" icon={<LogOut />} label="Đăng xuất" pill />
