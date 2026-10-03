@@ -3,7 +3,5 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/admin": "pages/admin.js",
-  "/contract/[id]": "pages/contract/[id].js",
-  "/profile": "pages/profile.js",
   "/api/admin/transactions": "pages/api/admin/transactions.js"
 }

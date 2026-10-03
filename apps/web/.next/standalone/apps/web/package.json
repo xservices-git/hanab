@@ -1,0 +1,50 @@
+{
+  "name": "@vay365/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack -p 3000 -H 127.0.0.1",
+    "build": "next build --webpack",
+    "start": "next start -p 3000",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "dev:stable": "node ../../scripts/clean-next-cache.js && next dev --webpack -p 3000 -H 127.0.0.1",
+    "postinstall": "prisma generate --schema=../../packages/shared/prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.0",
+    "@radix-ui/react-dropdown-menu": "^2.1.0",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-select": "^2.1.0",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-tabs": "^1.1.0",
+    "@radix-ui/react-toast": "^1.2.0",
+    "@vay365/shared": "*",
+    "axios": "^1.7.0",
+    "bcryptjs": "^2.4.3",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "cookie": "^0.6.0",
+    "jose": "^5.6.0",
+    "lucide-react": "^0.400.0",
+    "next": "^16.2.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "recharts": "^2.12.0",
+    "swr": "^2.2.0",
+    "tailwind-merge": "^2.5.0",
+    "zod": "^3.23.0",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.0",
+    "@types/cookie": "^0.6.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.4.0"
+  }
+}

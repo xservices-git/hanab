@@ -330,7 +330,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     balanceByUser[t.userId] = (balanceByUser[t.userId] || 0) + (t.type === 'credit' ? Number(t.amount) : -Number(t.amount));
   }
   console.log('[admin/customers] balanceByUser:', balanceByUser);
-  for (const c of customers) c.balance = balanceByUser[c.id] || 0;
+  for (const c of customers) (c as any).balance = balanceByUser[c.id] || 0;
 
   return res.status(200).json({ ok: true, data: customers });
 }

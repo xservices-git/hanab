@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/jwt';
-import { Activity, AlertTriangle, Banknote, Bell, Briefcase, Building2, CheckCircle2, ChevronRight, ClipboardList, Clock3, CreditCard, Download, ExternalLink, Facebook, Headphones, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, MinusCircle, Phone, Plus, PlusCircle, Search, Send, ShieldCheck, UserRound, Users, X, XCircle } from 'lucide-react';
+import { Activity, AlertTriangle, Banknote, Bell, Briefcase, Building2, CheckCircle2, ChevronRight, ClipboardList, Clock3, CreditCard, Download, ExternalLink, Facebook, Headphones, History, LayoutDashboard, LogOut, MapPin, Menu, MessageCircle, MinusCircle, Phone, Plus, PlusCircle, Search, Send, ShieldCheck, UserRound, Users, X, XCircle } from 'lucide-react';
 import * as Recharts from 'recharts';
 import { useToast } from '@/components/ui/toast';
 
@@ -173,6 +173,7 @@ function Customers({ customers, isAdmin, page, onPage, onOpenLoan }: any) {
   const [contract, setContract] = useState<any>(null);
   const [editing, setEditing] = useState<any>(null);
   const [txFor, setTxFor] = useState<any>(null);
+  const [historyFor, setHistoryFor] = useState<any>(null);
   async function toggleCustomer(c: any) {
     const locked = isLocked(c);
     const res = await fetch('/api/admin/customers', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerId: c.id, locked: !locked }) });
@@ -189,8 +190,8 @@ function Customers({ customers, isAdmin, page, onPage, onOpenLoan }: any) {
   return <DataCard title="Khách hàng">
     <div className="overflow-x-auto">
       <Table className="min-w-[1080px]">
-        <TableHeader><TableRow><TableHead>Khách hàng</TableHead><TableHead>CCCD</TableHead><TableHead>Số dư</TableHead><TableHead>Thu nhập</TableHead><TableHead>Hồ sơ</TableHead><TableHead>Trạng thái</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
-        <TableBody>{pager.items.map((c: any) => <Customer key={c.id} c={c} onViewContract={setContract} onOpenLoan={onOpenLoan} onToggleAccount={isAdmin ? toggleCustomer : undefined} onToggleWithdrawViolation={isAdmin ? toggleWithdrawViolation : undefined} onEdit={isAdmin ? setEditing : undefined} onOpenTransaction={isAdmin ? setTxFor : undefined} />)}</TableBody>
+        <TableHeader><TableRow><TableHead>Khách hàng</TableHead><TableHead>CCCD</TableHead><TableHead>Số dư</TableHead><TableHead>LSGD</TableHead><TableHead>Hồ sơ</TableHead><TableHead>Trạng thái</TableHead><TableHead>Lịch sử</TableHead><TableHead className="text-right">Thao tác</TableHead></TableRow></TableHeader>
+        <TableBody>{pager.items.map((c: any) => <Customer key={c.id} c={c} onViewContract={setContract} onOpenLoan={onOpenLoan} onToggleAccount={isAdmin ? toggleCustomer : undefined} onToggleWithdrawViolation={isAdmin ? toggleWithdrawViolation : undefined} onEdit={isAdmin ? setEditing : undefined} onOpenTransaction={isAdmin ? setTxFor : undefined} onOpenHistory={setHistoryFor} />)}</TableBody>
       </Table>
     </div>
     {!customers.length && <Empty text="Không có khách hàng" />}
@@ -198,6 +199,7 @@ function Customers({ customers, isAdmin, page, onPage, onOpenLoan }: any) {
     {contract && <ContractPopup data={contract} isAdmin={isAdmin} onClose={() => setContract(null)} onSaved={() => { reloadAdmin(); }} />}
     {editing && <EditCustomerPopup customer={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); reloadAdmin(); }} />}
     {txFor && <TransactionPopup customer={txFor} onClose={() => setTxFor(null)} onSaved={() => { setTxFor(null); reloadAdmin(); }} />}
+    {historyFor && <TransactionHistoryDialog customer={historyFor} onClose={() => setHistoryFor(null)} />}
   </DataCard>;
 }
 function Loans({ loans, agents, isAdmin, page, onPage, loanFilterCustomer, onClearCustomerFilter, customers }: any) { const pager = paginate(loans, page, 12); const filteredCustomer = customers?.find((c: any) => c.id === loanFilterCustomer); return <DataCard title="Hồ sơ vay">{loanFilterCustomer && <div className="mb-3 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800"><span>Đang lọc theo khách: <b>{filteredCustomer?.name || filteredCustomer?.phone || loanFilterCustomer}</b></span><button className="rounded-lg bg-white px-2 py-1 text-xs font-bold text-blue-700 hover:bg-blue-100" onClick={onClearCustomerFilter}>Bỏ lọc</button></div>}<LoanTable loans={pager.items} agents={agents} isAdmin={isAdmin} />{!loans.length && <Empty text="Không có hồ sơ" />}<Pagination page={pager.page} totalPages={pager.totalPages} total={loans.length} pageSize={12} onPage={onPage} /></DataCard>; }
@@ -292,7 +294,10 @@ function Customer({ c, onViewContract, onOpenLoan, onToggleAccount, onToggleWith
   return <TableRow className={onEdit ? 'cursor-pointer hover:bg-slate-50' : ''} onClick={() => onEdit && onEdit(c)}>
     <TableCell><Person name={c.name || p?.fullName || c.phone || '-'} sub={c.phone || c.email || p?.address || '-'} /></TableCell>
     <TableCell className="font-mono text-xs">{p?.citizenId || '-'}</TableCell>
-    <TableCell><div title={`Cộng: ${money(txCredit)} · Trừ: ${money(txDebit)}`}><b className={balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}>{balance >= 0 ? '+' : '-'}{money(Math.abs(balance))}</b>{txs.length > 0 && <div className="text-[10px] text-slate-400">tính từ {txs.length} giao dịch</div>}</div></TableCell>
+    <TableCell><div title={`Cộng: ${money(txCredit)} · Trừ: ${money(txDebit)}`}><b className={balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}>{balance >= 0 ? '+' : '-'}{money(Math.abs(balance))}</b>{txs.length > 0 && <div className="text-[10px] text-slate-400">{txs.length} giao dịch</div>}</div></TableCell>
+    <TableCell>
+      <Button type="button" size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); onOpenHistory && onOpenHistory(c); }} className="h-8 gap-1.5 px-3 text-xs"><History size={14} /> Lịch sử</Button>
+    </TableCell>
     <TableCell>{money(p?.monthlyIncome || 0)}<div className="text-xs text-slate-500">{p?.jobTitle || 'Chưa cập nhật nghề'}</div></TableCell>
     <TableCell>
       <button type="button" onClick={(e) => { e.stopPropagation(); onOpenLoan && onOpenLoan(latestLoan || null, c); }} className="group flex flex-col items-start gap-1 rounded-lg px-1 py-1 text-left transition hover:bg-slate-100">
@@ -465,6 +470,106 @@ function TransactionPopup({ customer, onClose, onSaved }: { customer: any; onClo
       </div>
     </div>
   );
+}
+
+function TransactionHistoryDialog({ customer, onClose }: { customer: any; onClose: () => void }) {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/admin/transactions?customerId=${encodeURIComponent(customer.id)}`);
+        const json = await res.json();
+        if (alive && json.ok) setItems(json.data || []);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [customer.id]);
+
+  const sorted = [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const totalCredit = sorted.filter((t) => t.type === 'credit').reduce((s, t) => s + Number(t.amount || 0), 0);
+  const totalDebit = sorted.filter((t) => t.type === 'debit').reduce((s, t) => s + Number(t.amount || 0), 0);
+  const balance = totalCredit - totalDebit;
+
+  let running = 0;
+  const txsAsc = [...sorted].reverse();
+  for (const t of txsAsc) {
+    if (t.type === 'credit') running += Number(t.amount || 0); else running -= Number(t.amount || 0);
+    t._running = running;
+  }
+  const txsWithBalance = [...txsAsc].reverse();
+
+  return <div onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4">
+    <div className="my-auto w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-4">
+        <div>
+          <div className="flex items-center gap-2 text-xl font-black text-slate-800"><History className="h-5 w-5 text-blue-600" />Lịch sử biến động số dư</div>
+          <div className="text-xs text-slate-500">{customer.name || customer.profile?.fullName || customer.phone} · ID: <span className="font-mono">{String(customer.id).slice(0, 8)}</span></div>
+        </div>
+        <Button variant="outline" onClick={onClose}>Đóng</Button>
+      </div>
+
+      <div className="grid gap-3 p-6 sm:grid-cols-3">
+        <div className="rounded-2xl bg-emerald-50 p-3 text-center">
+          <div className="text-xs font-bold uppercase text-emerald-700">Tổng cộng</div>
+          <div className="mt-1 text-base font-black text-emerald-700">{money(totalCredit)}</div>
+        </div>
+        <div className="rounded-2xl bg-rose-50 p-3 text-center">
+          <div className="text-xs font-bold uppercase text-rose-700">Tổng trừ</div>
+          <div className="mt-1 text-base font-black text-rose-700">{money(totalDebit)}</div>
+        </div>
+        <div className="rounded-2xl bg-slate-900 p-3 text-center text-white">
+          <div className="text-xs font-bold uppercase text-slate-300">Số dư hiện tại</div>
+          <div className={`mt-1 text-base font-black ${balance >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{balance >= 0 ? '+' : '-'}{money(Math.abs(balance))}</div>
+        </div>
+      </div>
+
+      <div className="px-6 pb-6">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="text-sm font-black text-slate-700">Timeline ({sorted.length} giao dịch)</div>
+          <div className="text-xs text-slate-500">Cột mốc: thời gian · số tiền · số dư sau</div>
+        </div>
+
+        {loading ? (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 py-8 text-center text-sm text-slate-500">Đang tải...</div>
+        ) : !sorted.length ? (
+          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 py-10 text-center text-sm text-slate-500">Chưa có giao dịch nào</div>
+        ) : (
+          <div className="relative">
+            <div className="absolute left-[19px] top-2 bottom-2 w-px bg-slate-200" />
+            <ol className="space-y-3">
+              {txsWithBalance.map((t, idx) => {
+                const credit = t.type === 'credit';
+                const ColorIcon = credit ? PlusCircle : MinusCircle;
+                const runningBal = t._running as number;
+                return <li key={t.id} className="relative flex gap-4 pl-0">
+                  <div className={`relative z-10 grid h-10 w-10 shrink-0 place-items-center rounded-full border-4 border-white ${credit ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'} shadow`}>
+                    <ColorIcon size={18} />
+                  </div>
+                  <div className="flex-1 rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-blue-300">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className={`text-base font-black ${credit ? 'text-emerald-700' : 'text-rose-700'}`}>{credit ? '+ ' : '− '}{money(t.amount)}</span>
+                      <span className="text-xs text-slate-400">{dateTime(t.createdAt)}</span>
+                    </div>
+                    <div className="mt-1.5 text-sm text-slate-700">{t.reason || <span className="italic text-slate-400">Không có lý do</span>}</div>
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-xs">
+                      <span className="text-slate-500">bởi <b className="text-slate-700">{t.createdBy?.name || t.createdBy?.phone || 'admin'}</b>{t.createdBy?.phone && t.createdBy?.name ? ` (${t.createdBy.phone})` : ''}</span>
+                      <span className={`font-bold ${runningBal >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>Số dư sau GD: {runningBal >= 0 ? '+' : '-'}{money(Math.abs(runningBal))}</span>
+                    </div>
+                    {idx === 0 && <span className="mt-2 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase text-blue-700">Mới nhất</span>}
+                  </div>
+                </li>;
+              })}
+            </ol>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
 }
 
 function EditCustomerPopup({ customer, onClose, onSaved }: { customer: any; onClose: () => void; onSaved: () => void }) {
