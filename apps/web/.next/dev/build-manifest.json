@@ -30,6 +30,21 @@
       "static/chunks/main.js",
       "static/chunks/pages/bank-info2.js"
     ],
+    "/contract/[id]": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/contract/[id].js"
+    ],
+    "/dashboard": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/dashboard.js"
+    ],
+    "/loans": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/loans.js"
+    ],
     "/profile": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
@@ -39,6 +54,11 @@
       "static/chunks/webpack.js",
       "static/chunks/main.js",
       "static/chunks/pages/signup.js"
+    ],
+    "/verify": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/verify.js"
     ]
   }
 }

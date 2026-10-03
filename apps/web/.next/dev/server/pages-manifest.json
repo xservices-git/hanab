@@ -4,6 +4,11 @@
   "/_document": "pages/_document.js",
   "/signup": "pages/signup.js",
   "/profile": "pages/profile.js",
-  "/bank-info": "pages/bank-info.js",
-  "/bank-info2": "pages/bank-info2.js"
+  "/bank-info2": "pages/bank-info2.js",
+  "/api/profile/bank": "pages/api/profile/bank.js",
+  "/loans": "pages/loans.js",
+  "/api/loans": "pages/api/loans.js",
+  "/verify": "pages/verify.js",
+  "/dashboard": "pages/dashboard.js",
+  "/contract/[id]": "pages/contract/[id].js"
 }
