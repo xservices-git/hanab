@@ -69,7 +69,7 @@ export default function LoansPage() {
               <div className="mb-2 text-[15px] font-bold text-[#2AAD69] underline">Biến động số dư</div>
               <div className="rounded-2xl bg-white p-4 text-sm shadow-sm ring-1 ring-slate-100">
                 {loan.status === 'approved' || loan.status === 'disbursed' ? (
-                  <div className="flex justify-between"><span>Giải ngân khoản vay</span><b className="text-emerald-600">+{money(loan.amount)}</b></div>
+                  <div className="flex justify-between"><span>Số dư ví</span><b className="text-emerald-600">+{money(loan.amount)}</b></div>
                 ) : <span className="text-slate-500">Chưa có biến động số dư</span>}
               </div>
             </div>

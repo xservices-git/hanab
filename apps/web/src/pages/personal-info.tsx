@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, User, Phone, Mail, CreditCard, MapPin, Cake, Briefcase, CircleDollarSign, CalendarDays } from 'lucide-react';
+import { ArrowLeft, User, Phone, CreditCard, MapPin, Cake, Briefcase, CircleDollarSign, CalendarDays } from 'lucide-react';
 import MobileBottomNav from '@/components/MobileBottomNav';
 
 type Profile = {
@@ -84,10 +84,17 @@ export default function PersonalInfoPage() {
 
             <Field icon={<User className="h-5 w-5" />} label="Họ và tên" value={data.fullName} />
             <Field icon={<Phone className="h-5 w-5" />} label="Số điện thoại" value={data.phone} />
-            <Field icon={<Mail className="h-5 w-5" />} label="Email" value={data.email} />
             <Field icon={<CreditCard className="h-5 w-5" />} label="CMND/CCCD" value={data.citizenId} />
             <Field icon={<Cake className="h-5 w-5" />} label="Ngày sinh" value={data.birthDate ? dt(data.birthDate) : null} />
             <Field icon={<User className="h-5 w-5" />} label="Giới tính" value={data.gender} />
             <Field icon={<MapPin className="h-5 w-5" />} label="Địa chỉ" value={data.address} />
             <Field icon={<Briefcase className="h-5 w-5" />} label="Nghề nghiệp" value={data.job} />
-            <Field icon={<CircleDollarSign className="h-5 w-5" />} label="Thu nhập" value={data.income ? new Intl.Num
+            <Field icon={<CircleDollarSign className="h-5 w-5" />} label="Thu nhập" value={data.income ? new Intl.NumberFormat('ko-KR').format(data.income) + ' KRW' : null} />
+            <Field icon={<CalendarDays className="h-5 w-5" />} label="Ngày đăng ký" value={dt(data.createdAt)} />
+          </section>
+        )}
+        <MobileBottomNav active="profile" />
+      </div>
+    </main>
+  );
+}

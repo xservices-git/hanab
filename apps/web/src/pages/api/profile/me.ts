@@ -28,10 +28,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         fullName: user.profile?.fullName || user.name || null,
         citizenId: user.profile?.citizenId || null,
         address: user.profile?.address || null,
-        birthDate: user.profile?.birthDate || null,
+        birthDate: user.profile?.dateOfBirth || null,
         gender: user.profile?.gender || null,
-        job: user.profile?.job || null,
-        income: user.profile?.income || null,
+        job: user.profile?.jobTitle || null,
+        income: user.profile?.monthlyIncome || null,
       },
     });
   } catch (e) {
