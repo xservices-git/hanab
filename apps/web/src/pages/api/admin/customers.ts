@@ -315,21 +315,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     take: 200,
   });
 
-  // Tính số dư ví cho từng khách hàng (giống /loans: loại trừ 'Số dư ví')
+  // Tính số dư ví cho từng khách hàng (cộng tất cả giao dịch, bao gồm 'Số dư ví')
   const customerIds = customers.map((c) => c.id);
   const allTx = customerIds.length
     ? await prisma.transaction.findMany({
         where: { userId: { in: customerIds } },
-        select: { userId: true, type: true, amount: true, reason: true },
+        select: { userId: true, type: true, amount: true },
       })
     : [];
-  console.log('[admin/customers] customers:', customers.length, 'firstIds:', customers.slice(0, 3).map((c) => ({ id: c.id, name: c.name, type: typeof c.id })), 'transactions:', allTx.length, 'sampleTx:', allTx.slice(0, 5));
   const balanceByUser: Record<string, number> = {};
   for (const t of allTx) {
-    if (t.reason === 'Số dư ví') continue;
     balanceByUser[t.userId] = (balanceByUser[t.userId] || 0) + (t.type === 'credit' ? Number(t.amount) : -Number(t.amount));
   }
-  console.log('[admin/customers] balanceByUser:', balanceByUser);
   for (const c of customers) (c as any).balance = balanceByUser[c.id] || 0;
 
   return res.status(200).json({ ok: true, data: customers });

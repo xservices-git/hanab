@@ -55,7 +55,6 @@ export default function LoansPage() {
 
   const balance = useMemo(() => {
     return txs
-      .filter((t) => t.reason !== 'Số dư ví')
       .reduce((sum, t) => sum + (t.type === 'credit' ? t.amount : -t.amount), 0);
   }, [txs]);
 
@@ -106,7 +105,7 @@ export default function LoansPage() {
                 <div className="text-[13px] text-slate-500">
                   Số dư:&nbsp;
                   <b className={balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
-                    {balance >= 0 ? '+' : '-'}{money(Math.abs(balance))}
+                    {balance >= 0}{money(Math.abs(balance))}
                   </b>
                 </div>
               </div>
@@ -114,23 +113,11 @@ export default function LoansPage() {
                 {txLoading ? (
                   <div className="p-4 text-center text-sm text-slate-500">Đang tải...</div>
                 ) : (() => {
-                    const approved = ['approved', 'disbursed', 'closed'].includes(String(loan?.status || '').toLowerCase());
-                    const disbursedRow = approved ? [{
-                      id: 'disbursed',
-                      type: 'credit' as const,
-                      amount: Number(loan.amount || 0),
-                      reason: 'Số dư ví',
-                      createdAt: loan.approvedAt || loan.updatedAt || loan.createdAt,
-                      createdBy: null as { id: string; name: string } | null,
-                      _isDisbursed: true,
-                    }] : [];
-                    // Gộp disbursed + txs, loại bỏ trùng disbursed từ DB
-                    const merged = [...disbursedRow, ...txs.filter((t) => t.reason !== 'Số dư ví')]
-                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-                    if (merged.length === 0) {
+                    // Backend đã tự tạo giao dịch "Số dư ví" khi duyệt, chỉ cần hiển thị tất cả txs
+                    if (txs.length === 0) {
                       return <div className="p-4 text-center text-sm text-slate-500">Chưa có biến động số dư</div>;
                     }
-                    return merged.map((t) => {
+                    return txs.map((t) => {
                       const isCredit = t.type === 'credit';
                       return (
                         <div key={t.id} className="flex items-start justify-between gap-3 p-4">
@@ -138,9 +125,7 @@ export default function LoansPage() {
                             <div className="truncate text-[14px] font-semibold text-slate-800">
                               {t.reason || (isCredit ? 'Cộng tiền' : 'Trừ tiền')}
                             </div>
-                            <div className="mt-1 text-[12px] text-slate-500">
-                              {(t as any)._isDisbursed ? 'Số dư ví' : ''}{dt(t.createdAt)}
-                            </div>
+                            <div className="mt-1 text-[12px] text-slate-500">{dt(t.createdAt)}</div>
                           </div>
                           <div className={`shrink-0 text-[15px] font-black ${isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
                             {isCredit ? '+' : '-'}{money(t.amount)}

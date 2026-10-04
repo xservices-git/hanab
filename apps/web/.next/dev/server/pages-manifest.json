@@ -2,6 +2,10 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/admin": "pages/admin.js",
-  "/api/admin/transactions": "pages/api/admin/transactions.js"
+  "/profile": "pages/profile.js",
+  "/api/loans": "pages/api/loans.js",
+  "/bank-info2": "pages/bank-info2.js",
+  "/api/profile/bank": "pages/api/profile/bank.js",
+  "/personal-info": "pages/personal-info.js",
+  "/api/profile/me": "pages/api/profile/me.js"
 }

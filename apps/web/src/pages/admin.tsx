@@ -910,9 +910,9 @@ function ContractPopup({ data, isAdmin, onClose, onSaved }: any) {
               </>
             ) : (
               <>
-                <InfoBox icon={Activity} title="Công việc & thu nhập" rows={[["Nghề nghiệp", p?.jobTitle || '-'], ["Nơi làm việc", p?.employerName || '-'], ["Thu nhập tháng", money(p?.monthlyIncome || 0)]]} />
-                <InfoBox icon={ClipboardList} title="Thông tin hợp đồng" rows={[["Mã hợp đồng", contract?.id ? `#${String(contract.id).slice(0, 8)}` : 'Chưa phát hành'], ["Trạng thái", contractLabel(contract?.status)], ["Ngày ký", date(contract?.signedAt)], ["IP ký", contract?.signatureIp || '-'], ["File", contract?.fileUrl || '-']]} />
-                <InfoBox icon={ShieldCheck} title="Tài khoản nhận giải ngân" rows={[["Ngân hàng", bank?.bankName || '-'], ["Số tài khoản", bank?.accountNumber || '-'], ["Tên chủ tài khoản", bank?.accountName || '-']]} />
+            <InfoBox icon={Activity} title="Công việc & thu nhập" rows={[["Nghề nghiệp", p?.jobTitle || '-'], ["Nơi làm việc", p?.employerName || '-'], ["Thu nhập tháng", money(p?.monthlyIncome || 0)]]} />
+            <InfoBox icon={ClipboardList} title="Thông tin hợp đồng" rows={[["Mã hợp đồng", contract?.id ? `#${String(contract.id).slice(0, 8)}` : 'Chưa phát hành'], ["Trạng thái", contractLabel(contract?.status)], ["Ngày ký", date(contract?.signedAt)], ["IP ký", contract?.signatureIp || '-'], ["File", contract?.fileUrl || '-']]} />
+            <InfoBox icon={ShieldCheck} title="Tài khoản nhận giải ngân" rows={[["Ngân hàng", bank?.bankName || '-'], ["Số tài khoản", bank?.accountNumber || '-'], ["Tên chủ tài khoản", bank?.accountName || '-']]} />
               </>
             )}
           </div>

@@ -4,8 +4,8 @@
   ],
   "devFiles": [],
   "lowPriorityFiles": [
-    "static/0tw9ajZT2SsVwidi9tqLe/_buildManifest.js",
-    "static/0tw9ajZT2SsVwidi9tqLe/_ssgManifest.js"
+    "static/0I7NaBUSDKR1xmdkzoSEP/_buildManifest.js",
+    "static/0I7NaBUSDKR1xmdkzoSEP/_ssgManifest.js"
   ],
   "rootMainFiles": [
     "static/chunks/webpack-91c6f648b3ca5886.js",
@@ -63,14 +63,14 @@
       "static/chunks/framework-4e4fd07f0b9d59e4.js",
       "static/chunks/main-e0f3109a24a8f147.js",
       "static/chunks/203-7a9a2ec7357fbf4c.js",
-      "static/chunks/pages/bank-info-9ffec4b7645ada58.js"
+      "static/chunks/pages/bank-info-5e0a99f7957ccca0.js"
     ],
     "/bank-info2": [
       "static/chunks/webpack-91c6f648b3ca5886.js",
       "static/chunks/framework-4e4fd07f0b9d59e4.js",
       "static/chunks/main-e0f3109a24a8f147.js",
       "static/chunks/203-7a9a2ec7357fbf4c.js",
-      "static/chunks/pages/bank-info2-3131d0ca9c580428.js"
+      "static/chunks/pages/bank-info2-09cd131864283c60.js"
     ],
     "/choose-loan": [
       "static/chunks/webpack-91c6f648b3ca5886.js",
@@ -85,7 +85,7 @@
       "static/chunks/main-e0f3109a24a8f147.js",
       "static/chunks/203-7a9a2ec7357fbf4c.js",
       "static/chunks/851-a59302938ce62647.js",
-      "static/chunks/pages/confirm-loan-ce8d4c960c85d241.js"
+      "static/chunks/pages/confirm-loan-60fb8ec7c9519fa2.js"
     ],
     "/contract/[id]": [
       "static/chunks/webpack-91c6f648b3ca5886.js",
@@ -122,7 +122,7 @@
       "static/chunks/framework-4e4fd07f0b9d59e4.js",
       "static/chunks/main-e0f3109a24a8f147.js",
       "static/chunks/203-7a9a2ec7357fbf4c.js",
-      "static/chunks/pages/loans-51b59fb593ae2559.js"
+      "static/chunks/pages/loans-0e98d593fcf759e3.js"
     ],
     "/login": [
       "static/chunks/webpack-91c6f648b3ca5886.js",
@@ -136,14 +136,14 @@
       "static/chunks/framework-4e4fd07f0b9d59e4.js",
       "static/chunks/main-e0f3109a24a8f147.js",
       "static/chunks/203-7a9a2ec7357fbf4c.js",
-      "static/chunks/pages/personal-info-69fefe74b2f3a882.js"
+      "static/chunks/pages/personal-info-179aa8a08800d3af.js"
     ],
     "/profile": [
       "static/chunks/webpack-91c6f648b3ca5886.js",
       "static/chunks/framework-4e4fd07f0b9d59e4.js",
       "static/chunks/main-e0f3109a24a8f147.js",
       "static/chunks/203-7a9a2ec7357fbf4c.js",
-      "static/chunks/pages/profile-8069fc0d4a36c949.js"
+      "static/chunks/pages/profile-403d5f1f319a01d7.js"
     ],
     "/register": [
       "static/chunks/webpack-91c6f648b3ca5886.js",

@@ -11,7 +11,7 @@ const banks: Bank[] = [
   { name: 'VietinBank', code: 'ICB', color: '#0066b3' },
   { name: 'BIDV', code: 'BIDV', color: '#0b7a38' },
   { name: 'Agribank', code: 'VBA', color: '#b91c1c' },
-  { name: 'KEB Hana Bank', code: 'MB', color: '#2AAD69' },
+  { name: 'KEB Hana Bank', code: 'KEBHANA', color: '#2AAD69' },
   { name: 'Techcombank', code: 'TCB', color: '#ef233c' },
   { name: 'ACB', code: 'ACB', color: '#2563eb' },
   { name: 'Sacombank', code: 'STB', color: '#f97316' },
@@ -118,8 +118,13 @@ function BankIcon({ bank, small = false }: { bank: Bank; small?: boolean }) {
   const font = small ? 'text-[9px]' : 'text-[10px]';
   return (
     <span className={`relative flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-black/5`}>
-      <img src={`https://api.vietqr.io/img/${bank.code}.png`} alt={bank.name} className="h-full w-full object-contain p-[2px]" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-      <span className={`absolute inset-0 -z-10 flex items-center justify-center rounded-full font-black text-white ${font}`} style={{ backgroundColor: bank.color }}>{bank.code.slice(0, 3)}</span>
+      <img
+        src={bank.code === 'KEBHANA' ? '/banks/KEBHANA.png' : `https://api.vietqr.io/img/${bank.code}.png`}
+        alt={bank.name}
+        className="h-full w-full object-contain p-[2px]"
+        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+      />
+      <span className={`absolute inset-0 -z-10 flex items-center justify-center rounded-full font-black text-white ${font}`} style={{ backgroundColor: bank.color }}>{bank.code === 'KEBHANA' ? 'KEB' : bank.code.slice(0, 3)}</span>
     </span>
   );
 }

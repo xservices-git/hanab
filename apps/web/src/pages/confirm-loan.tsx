@@ -13,8 +13,15 @@ export default function ConfirmLoanPage() {
   const [signed, setSigned] = useState(false);
   const [signature, setSignature] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [amount, setAmount] = useState<number>(0);
+  const [termMonths, setTermMonths] = useState<number>(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
+
+  useEffect(() => {
+    setAmount(Number(window.localStorage.getItem('loanAmount') || 10000000));
+    setTermMonths(Number(window.localStorage.getItem('loanTerm') || 60));
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -112,8 +119,8 @@ export default function ConfirmLoanPage() {
           <h2 className="text-center text-[18px] font-bold">Xác nhận khoản vay</h2>
 
           <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 p-4 leading-8 shadow-sm">
-            <p>Khoản tiền vay: <b className="text-[20px] text-[#2AAD69]">100,000,000</b> KRW</p>
-            <p>Thời hạn thanh toán: <b className="text-[20px] text-[#2AAD69]">60 tháng</b></p>
+            <p>Khoản tiền vay: <b className="text-[20px] text-[#2AAD69]">{new Intl.NumberFormat('ko-KR').format(amount)}</b> KRW</p>
+            <p>Thời hạn thanh toán: <b className="text-[20px] text-[#2AAD69]">{termMonths} tháng</b></p>
             <p className="text-[13px] text-slate-500">Lãi suất tham khảo: 1%/tháng</p>
           </div>
 
@@ -263,7 +270,7 @@ function ContractModal({ onClose, signature }: { onClose: () => void; signature:
                   <circle cx="90" cy="90" r="76" fill="none" stroke="#dc2626" strokeWidth="5" />
                   <circle cx="90" cy="90" r="62" fill="none" stroke="#dc2626" strokeWidth="2.5" />
                   <text fontSize="11" fontWeight="900" fill="#dc2626" letterSpacing="1.1">
-                    <textPath href="#sealTop" startOffset="50%" textAnchor="middle">NGÂN HÀNG TMCP QUÂN ĐỘI</textPath>
+                    <textPath href="#sealTop" startOffset="50%" textAnchor="middle">NGÂN HÀNG KEB HANA</textPath>
                   </text>
                   <text fontSize="10" fontWeight="800" fill="#dc2626" letterSpacing="0.9">
                     <textPath href="#sealBottom" startOffset="50%" textAnchor="middle">XÁC NHẬN ĐIỆN TỬ</textPath>

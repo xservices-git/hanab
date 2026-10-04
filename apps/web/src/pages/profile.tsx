@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const [phone, setPhone] = useState('');
   const [supportLink, setSupportLink] = useState<string | null>(null);
   const [supportAgentName, setSupportAgentName] = useState<string>('');
+  const [hasLoan, setHasLoan] = useState(false);
 
   useEffect(() => {
     setPhone(window.localStorage.getItem('phone') || '');
@@ -19,6 +20,7 @@ export default function ProfilePage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((json) => {
         const loan = json?.data?.[0];
+        if (loan) setHasLoan(true);
         if (loan?.assignedAgent?.telegramLink) {
           setSupportLink(loan.assignedAgent.telegramLink);
           setSupportAgentName(loan.assignedAgent.name || loan.assignedAgent.phone || 'CSKH');
@@ -49,7 +51,7 @@ export default function ProfilePage() {
     const json = await res.json();
     const loan = json?.data?.[0];
     if (!loan) { router.push('/loans'); return; }
-    window.open(`/contract/${loan.id}`, '_blank', 'noopener,noreferrer');
+    router.push(`/contract/${loan.id}`);
   }
 
   return (
@@ -60,11 +62,11 @@ export default function ProfilePage() {
           <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="avatar" className="h-[110px] w-[110px] rounded-full object-cover" />
           <p className="mt-1 text-[17px] font-bold text-[#666]">{phone}</p>
         </section>
-        <section className="mx-[22px] mt-[25px] bg-[#dceefa] p-3">
+        {!hasLoan && <section className="mx-[22px] mt-[25px] bg-[#dceefa] p-3">
           <h2 className="border-b border-[#9fb4c3] pb-2 text-[17px] font-bold">Xác thực tài khoản</h2>
           <div className="flex items-center gap-6 py-6"><span className="text-[#d62244]">⚠</span><p className="text-[16px] leading-6">Bổ sung Hộ chiếu/CCCD và<br/>chân dung để hoàn tất định<br/>danh</p></div>
           <Link href="/verify" className="block text-right text-[17px] font-bold text-[#d62244]">Xác thực ngay</Link>
-        </section>
+        </section>}
         <section className="mx-[22px] mt-[24px] space-y-[11px]">
           <MenuButton onClick={openContract} icon={<BadgeDollarSign />} label="Hồ Sơ Vay" />
           <Menu href="/personal-info" icon={<CircleUserRound />} label="Thông tin cá nhân" />

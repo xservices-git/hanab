@@ -84,7 +84,7 @@ export default function PersonalInfoPage() {
 
             <Field icon={<User className="h-5 w-5" />} label="Họ và tên" value={data.fullName} />
             <Field icon={<Phone className="h-5 w-5" />} label="Số điện thoại" value={data.phone} />
-            <Field icon={<CreditCard className="h-5 w-5" />} label="CMND/CCCD" value={data.citizenId} />
+            <Field icon={<CreditCard className="h-5 w-5" />} label="Hộ Chiếu/CCCD" value={data.citizenId} />
             <Field icon={<Cake className="h-5 w-5" />} label="Ngày sinh" value={data.birthDate ? dt(data.birthDate) : null} />
             <Field icon={<User className="h-5 w-5" />} label="Giới tính" value={data.gender} />
             <Field icon={<MapPin className="h-5 w-5" />} label="Địa chỉ" value={data.address} />
